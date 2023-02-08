@@ -1,0 +1,623 @@
+---
+title: "Homework 2"
+author: "Yuqi Su"
+date: "Due @ 5pm on February 8, 2019"
+header-includes:
+  - \usepackage{bm}
+  - \newcommand{\Real}{\mathbb{R}}
+  - \newcommand{\dom}{{\bf dom}\,}
+  - \newcommand{\Tra}{^{\sf T}} % Transpose
+  - \newcommand{\Inv}{^{-1}} % Inverse
+  - \def\vec{\mathop{\rm vec}\nolimits}
+  - \newcommand{\diag}{\mathop{\rm diag}\nolimits}
+  - \newcommand{\tr}{\operatorname{tr}} % Trace
+  - \newcommand{\epi}{\operatorname{epi}} % epigraph
+  - \newcommand{\V}[1]{{\bm{\mathbf{\MakeLowercase{#1}}}}} % vector
+  - \newcommand{\VE}[2]{\MakeLowercase{#1}_{#2}} % vector element
+  - \newcommand{\Vn}[2]{\V{#1}^{(#2)}} % n-th vector
+  - \newcommand{\Vtilde}[1]{{\bm{\tilde \mathbf{\MakeLowercase{#1}}}}} % vector
+  - \newcommand{\Vhat}[1]{{\bm{\hat \mathbf{\MakeLowercase{#1}}}}} % vector
+  - \newcommand{\VtildeE}[2]{\tilde{\MakeLowercase{#1}}_{#2}} % vector element
+  - \newcommand{\M}[1]{{\bm{\mathbf{\MakeUppercase{#1}}}}} % matrix
+  - \newcommand{\ME}[2]{\MakeLowercase{#1}_{#2}} % matrix element
+  - \newcommand{\Mtilde}[1]{{\bm{\tilde \mathbf{\MakeUppercase{#1}}}}} % matrix
+  - \newcommand{\Mbar}[1]{{\bm{\bar \mathbf{\MakeUppercase{#1}}}}} % matrix
+  - \newcommand{\Mn}[2]{\M{#1}^{(#2)}} % n-th matrix
+output: pdf_document
+---
+
+**Part 1.** We will work through some details on the Hodrick-Prescott (HP) filter for smoothing time series data. Let $\V{y} \in \Real^n$ denote the values of a signal sampled at $n$ time points. We assume the data has been generated from the model
+
+$$
+\V{y} = \V{\theta} + \V{e}
+$$
+where $\V{e} \in \Real^n$ is a noise vector of i.i.d. zero mean Gaussian random variable and $\V{\theta}$ is a smooth function, in the sense that its derivatives do not take on values that are "too big." The HP-filter seeks to recover a smooth $\V{\theta}$ by minimizing a penalized negative log-likelihood:
+
+$$
+\ell(\V{\theta}) = \frac{1}{2} \lVert \V{y} - \V{\theta} \rVert_2^2 + \frac{\lambda}{2} \lVert \Mn{D}{k}_n\V{\theta} \rVert_2^2,
+$$
+where $\lambda$ is a non-negative tuning parameter and $\Mn{D}{k}_n$ is the $k$th order differencing matrix for a signal of length $n$.
+
+$$
+	\Mn{D}{1}_n = \begin{pmatrix}
+	-1 & 1 & 0 & \cdots & 0 & 0 \\
+	0 & -1 & 1 & \cdots & 0 & 0 \\
+	\vdots & & & & & \\
+	0 & 0 & 0 & \cdots & -1 & 1 \\
+	\end{pmatrix} \in \Real^{n-1 \times n},
+$$
+and $\Mn{D}{k}_n = \Mn{D}{1}_{n-k+1}\Mn{D}{k-1}_n.$
+
+1. Write the gradient and Hessian of $\ell(\V{\theta})$.
+$\\$
+$\textbf{Solution:}$ $\\$
+Since $\Mn{D}{1}_n\in\Real^{(n-1)\times n}$, and $\Mn{D}{k}_n=\Mn{D}{1}_{n-k+1}\Mn{D}{k-1}_n$, then $\Mn{D}{k}_n\in\Real^{(n-k)\times n}$. Thus, $\Mn{D}{k}_n\V{\theta}\in\Real^{n-k}\\$
+Since $\ell(\V{\theta}) = \frac{1}{2} \lVert \V{y} - \V{\theta} \rVert_2^2 + \frac{\lambda}{2} \lVert \Mn{D}{k}_n\V{\theta} \rVert_2^2$, then we have:
+\begin{enumerate}
+\item The gradient of $\ell(\V{\theta})$ is: $$\begin{aligned}\nabla\ell&=(\V{\theta}-\V{y})+\lambda(\Mn{D}{k}_n)^{\top}(\Mn{D}{k}_n\V{\theta})\\ &=(\V{\theta}-\V{y})+\lambda(\Mn{D}{k}_n)^{\top}(\Mn{D}{k}_n\V)\V{\theta} \end{aligned}\\$$
+\item The Hessian of $\ell(\V{\theta})$ is: $$\M{H}(\V{\theta})=\M{I}+\lambda(\Mn{D}{k}_n)^{\top}(\Mn{D}{k}_n\V)$$
+\end{enumerate}
+$\\$ $\\$
+
+2. What is the computational complexity for a calculating the gradient and Hessian of $\ell(\V{\theta})$? Be sure to take into account the sparsity in $\Mn{D}{k}_n$.
+$\\$
+$\textbf{Solution:}\\$
+To calculate the gradient:$\\$
+Step(1). $\V{\theta}-\V{y}$ needs $\mathcal{O}(n)$ flops $\\$
+Step(2). $(\Mn{D}{k}_n)^{\top}(\Mn{D}{k}_n\V)$ needs $\mathcal{O}(nk^2)$ flops$\\$
+Step(3). $(\Mn{D}{k}_n)^{\top}(\Mn{D}{k}_n\V)\V{\theta}$ needs at most $\mathcal{O}(n^2)$ flops $\\$
+Step(4). $\V{\theta}-\V{y}+(\Mn{D}{k}_n)^{\top}(\Mn{D}{k}_n\V)\V{\theta}$ needs at most $\mathcal{O}(n)$ flops $\\$
+Thus, the complexity for calculating the gradient of $\ell(\V{\theta})$ is $\mathcal{O}(nk^2)\\$
+$\\$To calculate the Hessian: $\\$
+Step(1). $(\Mn{D}{k}_n)^{\top}(\Mn{D}{k}_n\V)$ needs $\mathcal{O}(nk^2)$ flops$\\$
+Step(2). $\lambda(\Mn{D}{k}_n)^{\top}(\Mn{D}{k}_n\V)$ needs at most $\mathcal{O}(n^2)$ flops$\\$
+Step(3). $\M{I}+\lambda(\Mn{D}{k}_n)^{\top}(\Mn{D}{k}_n\V)$ needs at most $\mathcal{O}(n^2)$ flops $\\$
+Thus, the complexity for calculating the Hessian of $\ell(\V{\theta})$ is $\mathcal{O}(nk^2)\\$
+$\\$ $\\$
+
+
+3. Prove that $\ell(\V{\theta})$ is strongly convex.
+$\\$
+$\textbf{Solution:\\}$
+Since $\ell(\V{\theta}) = \frac{1}{2} \lVert \V{y} - \V{\theta} \rVert_2^2 + \frac{\lambda}{2} \lVert \Mn{D}{k}_n\V{\theta} \rVert_2^2$, denote $\\ g(\V{\theta})=\ell(\V{\theta})-\frac{m}{2}\|\V{\theta}\|_2^2=\frac{1}{2} \lVert \V{y} - \V{\theta} \rVert_2^2 + \frac{\lambda}{2} \lVert \Mn{D}{k}_n\V{\theta} \rVert_2^2-\frac{m}{2}\|\V{\theta}\|_2^2 \\$
+For $\forall 0\leq \alpha\leq 1$, we have:
+$$
+g(\alpha\V{\theta}_1+(1-\alpha)\V{\theta}_2)=\frac{1}{2}\|\V{y}-\alpha_1\V{\theta_1}-(1-\alpha)\V{\theta_2}\|_2^2+\frac{\lambda}{2}\|\Mn{D}{k}_n(\alpha\V{\theta_1}+(1-\alpha)\V{\theta_2})\|_2^2-\frac{m}{2}\|(\alpha\V{\theta_1}+(1-\alpha)\V{\theta_2}\|_2^2\\
+$$
+$$=\frac{1}{2}\|\alpha\V{y}-\alpha_1\V{\theta}_1+(1-\alpha)\V{y}-(1-\alpha)\theta_2\|_2^2+\frac{\lambda}{2}\|\alpha\Mn{D}{k}_n\V{\theta}_1+(1-\alpha)\Mn{D}{k}_n\V{\theta}_2\|_2^2-\frac{m}{2}\|(\alpha\V{\theta_1}+(1-\alpha)\V{\theta_2}\|_2^2\\
+$$
+$$\leq\frac{1}{2}\|\alpha\V{y}-\alpha\V{\theta}_1\|_2^2+\frac{1}{2}\|(1-\alpha)\V{y}-(1-\alpha)\V{\theta}_2\|_2^2+\frac{\lambda}{2}\|\alpha\Mn{D}{k}_n\V{\theta}_1\|_2^2+\frac{\lambda}{2}\|(1-\alpha)\Mn{D}{k}_n\V{\theta}_2\|_2^2-\frac{m}{2}\|\alpha\V{\theta}_1\|_2^2-\frac{m}{2}\|(1-\alpha)\V{\theta}_2\|_2^2
+$$
+$$
+=\frac{\alpha}{2}\|\V{y}-\V{\theta}_1\|_2^2+\frac{1-\alpha}{2}\|\V{y}-\V{\theta}_2\|_2^2+\frac{\lambda\alpha}{2}\|\Mn{D}{k}_n\V{\theta}_1\|_2^2+\frac{\lambda(1-\alpha)}{2}\|\Mn{D}{k}_n\V{\theta}_2\|_2^2-\frac{m\alpha}{2}\|\V{\theta}_1\|_2^2-\frac{m(1-\alpha)}{2}\|\V{\theta}_2\|_2^2
+$$
+$=\alpha\{\frac{1}{2}\|\V{y}-\V{\theta}_1\|_2^2+\frac{\lambda}{2}\|\Mn{D}{k}_n\V{\theta}_1\|_2^2-\frac{m}{2}\|\V{\theta}_1\|_2^2\}+(1-\alpha)\{ \frac{1}{2}\|\V{y}-\V{\theta}_2\|_2^2+\frac{\lambda}{2}\|\Mn{D}{k}_n\V{\theta}_2\|_2^2-\frac{m}{2}\|\V{\theta}_2\|_2^2\}$
+$\\=\alpha g(\V{\theta}_1)+(1-\alpha)g(\V{\theta}_2)\\$
+The inequality works because of triangle inequality property of two norms. $\\$
+Hence, $\ell(\V{\theta})-\frac{m}{2}\|\V{\theta}\|_2^2$ is convex. By definition, $\ell(\V{\theta})$ is strongly convex.$\\$
+Proof completed $\\ \\ \\$
+
+
+
+4. Prove that $\ell(\V{\theta})$ is $L$-Lipschitz differentiable with $L = 1 + \lambda\lVert \Mn{D}{k}_n \rVert_{\text{op}}^2$.
+$\\$
+$\textbf{Solution:}\\$
+If $\nabla \ell(\V{\theta})$ is Lipschitz continuous with parameter L, then $\ell(\V{\theta})$ is L-Lipschitz differentiable. i.e. we will prove that $\nabla \ell(\V{\theta})$ is L-lipschitz continuous with parameter $L=1+\lambda\|\Mn{D}{k}\|_{op}^2\\$
+Let $g(\V{\theta})=\nabla\ell(\V{\theta})=(\V{\theta}-\V{y})+\lambda(\Mn{D}{k}_n)^{\top}(\Mn{D}{k}_n\V)\V{\theta}\\$
+For $\forall \V{\theta}_1, \V{\theta}_2 \in \Real^{n}$, we have:
+$\\ \|g(\V{\theta}_1)-g(\V{\theta}_2)\|_2=\|(\V{\theta}_1-\V{y})+\lambda(\Mn{D}{k}_n)^{\top}(\Mn{D}{k}_2)\V{\theta}_1-(\V{\theta}_2-\V{y})+\lambda(\Mn{D}{k}_2)^{\top}(\Mn{D}{k}_n)\V{\theta}_2\|_2\\$
+$=\|(\V{\theta}_1-\V{\theta}_2)+\lambda(\Mn{D}{k}_2)^{\top}(\Mn{D}{k}_n)(\V{\theta}_1-\V{\theta}_2)\|_2\\$
+$=\|\frac{\V{\theta}_1-\V{\theta}_2}{\|\V{\theta}_1-\V{\theta}_2\|}+\lambda(\Mn{D}{k}_2)^{\top}(\Mn{D}{k}_n)\frac{\V{\theta}_1-\V{\theta}_2}{{\|\V{\theta}_1-\V{\theta}_2\|}}\|_2{\|\V{\theta}_1-\V{\theta}_2\|}_2\\$
+$\leq \{\|\frac{\V{\theta}_1-\V{\theta}_2}{\|\V{\theta}_1-\V{\theta}_2\|}\|_2+\|\lambda(\Mn{D}{k}_2)^{\top}(\Mn{D}{k}_n)\frac{\V{\theta}_1-\V{\theta}_2}{{\|\V{\theta}_1-\V{\theta}_2\|}}\|_2\}{\|\V{\theta}_1-\V{\theta}_2\|}_2\\$
+$\leq \{1+\sup_{\|\V{V}\|_2=1}+\|\lambda(\Mn{D}{k}_2)^{\top}(\Mn{D}{k}_n)\V{V}\|_2\}{\|\V{\theta}_1-\V{\theta}_2\|}_2\\$
+$=\{1+\lambda\|(\Mn{D}{k}_2)^{\top}(\Mn{D}{k}_n)\|_{op}\}{\|\V{\theta}_1-\V{\theta}_2\|}_2\\$
+$=\{1+\lambda\|\Mn{D}{k}\|_{op}^2\}{\|\V{\theta}_1-\V{\theta}_2\|}_2\\$
+The first inequality works because of triangle inequality of norm, and the second inequality works because of the property of norm, which has been introduced in lecture.$\\$
+Hence, $\nabla\ell(\V{\theta})$ is L-Lipschitz continuous with parameter L, thus $\ell(\V{\theta})$ is $L$-Lipschitz differentiable with $L = 1 + \lambda\lVert \Mn{D}{k}_n \rVert_{\text{op}}^2$.
+$\\$ $\\$
+
+
+5. Prove that $\ell(\V{\theta})$ has a unique global minimizer for all $\lambda \geq 0$.
+$\\$
+$\textbf{Solution:}\\$
+From Question #3, we have showed that $\ell(\V{\theta})$ is strongly convex, then we will prove that a strongly convex function is coercive, which will guarantee that $\ell(\V{\theta})$ must attain a global minimum by Weierstrass exrreme value theorem, then we will prove that the function is also strictly convex, which will guarantee the uniqueness of the minimum. Here are the proof(motivated by the post on piazza): $\\$
+Assume $\ell(\V{\theta})$ is strongly convex with parameter $m>0$, then we have the first-order condition:$$ f(\V{\theta}_1)\geq f(\V{\theta}_2)+\nabla f(\V{\theta})_2^{\top}(\V{\theta}_1-\V{\theta}_2)+\frac{m}{2}\|\V{\theta}_1-\V{\theta}_2\|_2^2$$
+By choosing $\V{\theta}_2=\V{0}$, we know $$ f(\V{\theta}_1)\geq f(\V{0})+\nabla f(\V{0})_2^{\top}(\V{\theta}_1-\V{\theta}_2)+\frac{m}{2}\|\V{\theta}_1\|_2^2$$
+From Cauchy-Schwarz inequality, we know $|\nabla f(\V{0})^{\top}|\V{\theta}_1\leq \|\nabla f(\V{0})\|_2\|\V{\theta}_1\|_2,\\$so $-\|\nabla f(\V{0})\|_2\|\V{\theta}_1\|_2\leq \nabla f(\V{0})^{\top}\V{\theta}_1\\$
+Thus we have $\V{\theta}_1\geq f(\V{0})-\|\nabla f(\V{0})\|_2\|\V{\theta}_1\|_2+\frac{m}{2}\|\V{\theta}_1\|_2^2$. We can see that as $\V{\theta}_1$ goes to infinity, the right hand side goes to infinity since $m>0$. Thus $\lim_{\|\V{\theta}_1\|_2\rightarrow\infty}f(\V{\theta}_1)=+\infty$. Thus the function $\ell({\V{\theta}})$ is coercive, and by Weierstrass Extreme Value Theorem, $f$ must attain a global minimum.$\\$
+For any $\V{\theta}_1,\V{\theta}_2, (\V{\theta}_1\neq \V{\theta}_2),\alpha\in [0,1]$, we know that $\ell(\V{\theta})-\frac{m}{2}||\V{\theta}||_2^2$ is convex.
+Then $\ell(\alpha \V{\theta}_1+(1-\alpha)\V{\theta}_2)-\frac{m}{2}||\alpha \V{\theta}_1+(1-\alpha)\V{\theta}_2||_2^2\leq \alpha \ell(\V{\theta}_1)+(1-\alpha)\ell(\V{\theta}_2)-\alpha\frac{m}{2}||\V{\theta}_1||_2^2-(1-\alpha)\frac{m}{2}||\V{\theta}_2||_2^2,$
+Since we know $\frac{1}{2}||\V{\theta}||_2^2$ is strictly convex, then $\\\frac{m}{2}||\alpha \V{\theta}_1+(1-\alpha)\V{\theta}_2||_2^2-\alpha\frac{m}{2}||\V{\theta}_1||_2^2-(1-\alpha)\frac{m}{2}||\V{\theta}_2||_2^2< 0.\\$ 
+Thus, $\ell(\alpha \V{\theta}_1+(1-\alpha)\V{\theta}_2)< \alpha \ell(\V{\theta}_1)+(1-\alpha)\ell(\V{\theta}_2).$ $\\$
+From $\ell(\V{\theta})$ is both strictly convex and coercive, we know there is a global minimizer, and the minimizer is unique. 
+
+
+
+\newpage
+
+**Part 2.** Gradient Descent
+
+You will next add an implementation of gradient descent to your R package. Your function will include using both a fixed step-size as well as one chosen by backtracking.
+
+Please complete the following steps.
+
+**Step 0:** Make an R package entitled "unityidST790".
+
+**Step 1:** Write a function "gradient_step."
+
+```{r, echo=TRUE}
+#' Gradient Step
+#' 
+#' @param gradf handle to function that returns gradient of objective function
+#' @param x current parameter estimate
+#' @param t step-size
+#' @export
+#gradient_step <- function(gradf, x, t) {
+  
+#}
+```
+Your function should return $\V{x}^+ = \V{x} - t \nabla f(\V{x})$.
+
+**Step 2:** Write a function "gradient_descent_fixed." Your algorithm can stop iterating once the relative change in the objective function drops below `tol`.
+
+```{r, echo=TRUE}
+#' Gradient Descent (Fixed Step-Size)
+#'
+#' @param fx handle to function that returns objective function values
+#' @param gradf handle to function that returns gradient of objective function
+#' @param x0 initial parameter estimate
+#' @param t step-size
+#' @param max_iter maximum number of iterations
+#' @param tol convergence tolerance
+#' @export
+#gradient_descent_fixed <- function(fx, gradf, x0, t, max_iter=1e2, tol=1e-3) {
+  
+#}
+```
+Your function should return
+
+- The final iterate value
+- The objective function values
+- The 2-norm of the gradient values
+- The relative change in the function values
+- The relative change in the iterate values
+
+**Step 3:** Write a function "backtrack."
+
+```{r, echo=TRUE}
+#' Backtracking
+#' 
+#' @param fx handle to function that returns objective function values
+#' @param x current parameter estimate
+#' @param t current step-size
+#' @param df the value of the gradient of objective function evaluated at the current x
+#' @param alpha the backtracking parameter
+#' @param beta the decrementing multiplier
+#' @export
+#backtrack <- function(fx, x, t, df, alpha=0.5, beta=0.9) {
+  
+#}
+```
+Your function should return the selected step-size.
+
+**Step 4:** Write a function "gradient_descent_backtrack" that performs gradient descent using backtracking. Your algorithm can stop iterating once the relative change in the objective function drops below `tol`.
+
+```{r, echo=TRUE}
+#' Gradient Descent (Backtracking Step-Size)
+#' 
+#' @param fx handle to function that returns objective function values
+#' @param gradf handle to function that returns gradient of objective function
+#' @param x0 initial parameter estimate
+#' @param max_iter maximum number of iterations
+#' @param tol convergence tolerance
+#' @export
+#gradient_descent_backtrack <- function(fx, gradf, x0, max_iter=1e2, tol=1e-3) {
+  
+#}
+```
+Your function should return
+
+- The final iterate value
+- The objective function values
+- The 2-norm of the gradient values
+- The relative change in the function values
+- The relative change in the iterate values
+
+**Step 5:** Write a function "gradient_descent" that is a wrapper function for "gradient_descent_fixed" and "gradient_descent_backtrack." The default should be to use the backtracking.
+
+```{r, echo=TRUE}
+#' Gradient Descent
+#' 
+#' @param fx handle to function that returns objective function values
+#' @param gradf handle to function that returns gradient of objective function
+#' @param x0 initial parameter estimate
+#' @param t step-size
+#' @param max_iter maximum number of iterations
+#' @param tol convergence tolerance
+#' @export
+#gradient_descent <- function(fx, gradf, x0, t=NULL, max_iter=1e2, tol=1e-3) {
+  
+#}
+```
+Your function should return
+
+- The final iterate value
+- The objective function values
+- The 2-norm of the gradient values
+- The relative change in the function values
+- The relative change in the iterate values
+
+\newpage
+
+**Step 6:** Write a function to compute the $k$th order differencing matrix $\Mn{D}{k}_n$. Use the Matrix package by adding it to the dependency list in the DESCRIPTION file. Among other things, the Matrix package provides efficient storage and mulitplication for sparse matrices.
+
+```{r, echo=TRUE}
+#' Compute kth order differencing matrix
+#' 
+#' @param k order of the differencing matrix
+#' @param n Number of time points
+#' @export
+#myGetDkn <- function(k, n) {
+  
+#}
+```
+
+
+**Step 7:** Write functions 'fx_hp' and 'gradf_hp' to perform HP-filtering.
+
+```{r, echo=TRUE}
+#' Objective Function for HP-filtering
+#' 
+#' @param y response
+#' @param theta regression coefficient vector
+#' @param Dkn sparse differencing matrix
+#' @param lambda regularization parameter
+#' @export
+#fx_hp <- function(y, theta, Dkn, lambda=0) {
+  
+#}
+
+#' Gradient for HP-filtering
+#'
+#' @param y response
+#' @param theta regression coefficient vector
+#' @param Dkn sparse differencing matrix
+#' @param lambda regularization parameter
+#' @export
+#gradf_hp <- function(y, theta, Dkn, lambda=0) {
+  
+#}
+```
+
+**Step 8:** Perform HP-filtering (with $\lambda = 100$) on the following data example using the fixed step-size. Use your answers to Part 1 to choose an appropriate fixed step-size. Try using $\V{0}$ and $\V{y}$ as initial values for $\V{\theta}$. Plot the difference $\ell(\V{\theta}_m) - \ell(\V{\theta}_{1000})$ versus the iteration $m$. Comment on the shape of the plot given what you know about the iteration complexity of gradient descent with a fixed step size.
+
+```{r, echo=TRUE}
+set.seed(12345)
+n <- 1e2 
+x <- seq(0, 5, length.out=n) 
+y <- sin(pi*x) + x + 0.5*rnorm(n) 
+
+## use zero vector as initial values for \theta
+library(ysu25ST790)
+library(Matrix)
+a0<-rep(0,n) #0 vector
+k<-1
+lambda<-100
+Dkn<-myGetDkn(k=k,n=n)
+s<-svd(Dkn)
+D<-diag(s$d)
+l1<-D[1][1]
+l<-1+lambda*(l1)^2
+L<-1/l
+fx<-function(theta){
+  return(fx_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+gradf<-function(theta){
+  return(gradf_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+t<-L  #fixed step size
+fgrad<-gradient_descent_fixed(fx, gradf, t, a0, max_iter=1e3, tol=1e-3)
+obj_value<-fgrad$'objective function values'
+diff<-obj_value-obj_value[length(obj_value)]
+iter1 <- c(1:length(obj_value))
+diff1 <- diff[1:length(obj_value)]
+plot(iter1,diff1,xlab="number of iterations", ylab="differences",main="zero vector as initial values")
+
+
+##use y as initial values for \theta
+fx<-function(theta){
+  return(fx_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+gradf<-function(theta){
+  return(gradf_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+t<-L  #fixed step size
+fgrad<-gradient_descent_fixed(fx, gradf, t, y, max_iter=1e2, tol=1e-3)
+obj_value<-fgrad$'objective function values'
+diff<-obj_value-obj_value[length(obj_value)]
+iter1 <- c(1:length(obj_value))
+diff1 <- diff[1:length(obj_value)]
+plot(iter1,diff1,xlab="number of iterations", ylab="differences",main="y vector as initial values")
+
+
+
+##plot the noisy data, as points, and smoothed estimates, as a line
+library(ggplot2)
+library(scales)
+test_data <-
+  data.frame(
+    noisy_data=y,
+    smooth_data=fgrad$'final iterate value',
+    iteration = seq(1,length(y))
+  )
+
+ggplot(test_data, aes(iteration)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("plot of noisy data and smoothed estimates")+xlab("Iteration") + ylab("Value")
+
+
+```
+
+- Also plot the noisy data, as points, and smoothed estimates, as a line.
+
+**Step 9:** Perform HP-filtering (with $\lambda = 100$) on the simulated data above using backtracking. Try using $\V{0}$ and $\V{y}$ as initial values for $\V{\theta}$. Plot the difference $\ell(\V{\theta}_m) - \ell(\V{\theta}_{1000})$ versus the iteration $m$. Comment on the shape of the plot given what you know about the iteration complexity of gradient descent with backtracking.
+
+```{r, echo=TRUE}
+set.seed(12345)
+n <- 1e2
+x <- seq(0, 5, length.out=n)
+y <- sin(pi*x) + x + 0.5*rnorm(n)
+
+## use zero vector as initial values for \theta
+library(ysu25ST790)
+library(Matrix)
+a0<-rep(0,n) #0 vector
+k<-1
+lambda<-100
+Dkn<-myGetDkn(k=k,n=n)
+fx<-function(theta){
+  return(fx_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+gradf<-function(theta){
+  return(gradf_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+fgrad<-gradient_descent_backtrack(fx, gradf, a0, max_iter=1e3, tol=1e-3)
+obj_value<-fgrad$'objective function values'
+diff<-obj_value-obj_value[length(obj_value)]
+iter1 <- c(1:length(obj_value))
+diff1 <- diff[1:length(obj_value)]
+plot(iter1,diff1,xlab="number of iterations", ylab="differences",main="zero vector as initial values")
+
+
+##use y as initial values for \theta
+fx<-function(theta){
+  return(fx_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+gradf<-function(theta){
+  return(gradf_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+t<-L  #fixed step size
+fgrad<-gradient_descent_backtrack(fx, gradf, y, max_iter=1e2, tol=1e-3)
+obj_value<-fgrad$'objective function values'
+diff<-obj_value-obj_value[length(obj_value)]
+iter1 <- c(1:length(obj_value))
+diff1 <- diff[1:length(obj_value)]
+plot(iter1,diff1,xlab="number of iterations", ylab="differences",main="y vector as initial values")
+
+```
+$\\$Comment: The shape of the line shows on the plot is decreasing, which means after the number of iteration increases, the differences between the estimates and the noisy data becomes less and less. $\\$
+Moreover, For Backtrack method, the speed of iteration is quicker when we take $\V{y}$ as the initial values, and it almost takes us 100 iterations to get a approximately zero difference when we use $\V{0}$ vector as the initial values. As for the complexity, since from the lecture notes, we know the bound on number of iteration so that $f(\V{x}_k)-f^*\leq \epsilon$ is $\mathcal{O}(log\frac{1}{\epsilon})$ for a strongly convex function. Since in our assumption, $\epsilon=0.001$, then, the complexity is $\mathcal{O}(9.96578)$. As we can see from the graph that using $\V{y}$ as initial values, it takes us about 10 iterations to get very close to zero, but actually it takes over 50 iterations to make the difference decreased below the $tol$; but for taking $\V{0}$ as initial values, it takes more iteration steps to shrink the differences, which is about 150 iterations. As for the fixed step method, similar conclusion can be got that it is faster to use $\V{y}$ as initial values. Also, as we can see from the number of iterations that backtracking method is faster than fixed step method.  $\\$
+$\\$
+
+
+
+
+**Step 10:** Use your code above to smooth some interesting time series data. For example, you might use the tseries R package on CRAN (see the function **get.hist.quote**) to download historical financial data for the daily closing prices of Apple stock over the past two years. Try at least 3 different $\lambda$ values - different enough to generate noticably different smoothed estimates - and at least two differencing matrix orders, e.g. $\Mn{D}{2}$ and $\Mn{D}{3}$. For all six $\lambda$ and differencing matrices combinations, plot the noisy data, as points, and smoothed estimates, as a line.
+```{r, echo=TRUE}
+library(tseries)
+#plot the time series plot
+con <- url("https://finance.yahoo.com")
+
+if(!inherits(try(open(con), silent = TRUE), "try-error")) {
+  close(con)
+  apple <- get.hist.quote(instrument = "AAPL", start = "2017-01-01",
+                      quote = "Close")
+  plot(apple)
+}
+
+#use backtrack method to try different k and lambda
+#(1) k=1, lambda=100
+y<-apple
+k<-1
+lambda<-100
+n<-length(y)
+Dkn<-myGetDkn(k=k,n=n)
+fx<-function(theta){
+  return(fx_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+gradf<-function(theta){
+  return(gradf_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+fgrad<-gradient_descent_backtrack(fx, gradf, y, max_iter=1e3, tol=1e-3)
+obj_value<-fgrad$'objective function values'
+diff<-obj_value-obj_value[length(obj_value)]
+iter1 <- c(1:length(obj_value))
+diff1 <- diff[1:length(obj_value)]
+
+noisy_data=y
+smooth_data=fgrad$'final iterate value'
+test_data <-
+  data.frame(
+    noisy_data,
+    smooth_data,
+    iteration = seq(1,length(y))
+  )
+
+ggplot(test_data, aes(iteration)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("when k=1, lambda=100")+xlab("Iteration") + ylab("Value")
+
+#(2) k=1, lambda=1000
+y<-apple
+k<-1
+lambda<-1000
+n<-length(y)
+Dkn<-myGetDkn(k=k,n=n)
+fx<-function(theta){
+  return(fx_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+gradf<-function(theta){
+  return(gradf_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+fgrad<-gradient_descent_backtrack(fx, gradf, y, max_iter=1e3, tol=1e-3)
+obj_value<-fgrad$'objective function values'
+diff<-obj_value-obj_value[length(obj_value)]
+iter1 <- c(1:length(obj_value))
+diff1 <- diff[1:length(obj_value)]
+
+noisy_data=y
+smooth_data=fgrad$'final iterate value'
+test_data <-
+  data.frame(
+    noisy_data,
+    smooth_data,
+    iteration = seq(1,length(y))
+  )
+
+ggplot(test_data, aes(iteration)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("when k=1, lambda=1000")+xlab("Iteration") + ylab("Value")
+
+
+#(3) k=1, lambda=10000
+y<-apple
+k<-1
+lambda<-10000
+n<-length(y)
+Dkn<-myGetDkn(k=k,n=n)
+fx<-function(theta){
+  return(fx_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+gradf<-function(theta){
+  return(gradf_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+fgrad<-gradient_descent_backtrack(fx, gradf, y, max_iter=1e3, tol=1e-3)
+obj_value<-fgrad$'objective function values'
+diff<-obj_value-obj_value[length(obj_value)]
+iter1 <- c(1:length(obj_value))
+diff1 <- diff[1:length(obj_value)]
+
+noisy_data=y
+smooth_data=fgrad$'final iterate value'
+test_data <-
+  data.frame(
+    noisy_data,
+    smooth_data,
+    iteration = seq(1,length(y))
+  )
+
+ggplot(test_data, aes(iteration)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("when k=1, lambda=10000")+xlab("Iteration") + ylab("Value")
+
+#(4) k=3, lambda=100
+y<-apple
+k<-3
+lambda<-100
+n<-length(y)
+Dkn<-myGetDkn(k=k,n=n)
+fx<-function(theta){
+  return(fx_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+gradf<-function(theta){
+  return(gradf_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+fgrad<-gradient_descent_backtrack(fx, gradf, y, max_iter=1e3, tol=1e-3)
+obj_value<-fgrad$'objective function values'
+diff<-obj_value-obj_value[length(obj_value)]
+iter1 <- c(1:length(obj_value))
+diff1 <- diff[1:length(obj_value)]
+
+noisy_data=y
+smooth_data=fgrad$'final iterate value'
+test_data <-
+  data.frame(
+    noisy_data,
+    smooth_data,
+    iteration = seq(1,length(y))
+  )
+
+ggplot(test_data, aes(iteration)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("when k=3, lambda=100")+xlab("Iteration") + ylab("Value")
+
+#(5) k=3, lambda=1000
+y<-apple
+k<-3
+lambda<-1000
+n<-length(y)
+Dkn<-myGetDkn(k=k,n=n)
+fx<-function(theta){
+  return(fx_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+gradf<-function(theta){
+  return(gradf_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+fgrad<-gradient_descent_backtrack(fx, gradf, y, max_iter=1e3, tol=1e-3)
+obj_value<-fgrad$'objective function values'
+diff<-obj_value-obj_value[length(obj_value)]
+iter1 <- c(1:length(obj_value))
+diff1 <- diff[1:length(obj_value)]
+
+noisy_data=y
+smooth_data=fgrad$'final iterate value'
+test_data <-
+  data.frame(
+    noisy_data,
+    smooth_data,
+    iteration = seq(1,length(y))
+  )
+
+ggplot(test_data, aes(iteration)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("when k=3, lambda=1000")+xlab("Iteration") + ylab("Value")
+
+
+#(6) k=3, lambda=10000
+y<-apple
+k<-3
+lambda<-10000
+n<-length(y)
+Dkn<-myGetDkn(k=k,n=n)
+fx<-function(theta){
+  return(fx_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+gradf<-function(theta){
+  return(gradf_hp(y=y, theta, Dkn=Dkn, lambda=100))
+}
+fgrad<-gradient_descent_backtrack(fx, gradf, y, max_iter=1e3, tol=1e-3)
+obj_value<-fgrad$'objective function values'
+diff<-obj_value-obj_value[length(obj_value)]
+iter1 <- c(1:length(obj_value))
+diff1 <- diff[1:length(obj_value)]
+
+noisy_data=y
+smooth_data=fgrad$'final iterate value'
+test_data <-
+  data.frame(
+    noisy_data,
+    smooth_data,
+    iteration = seq(1,length(y))
+  )
+ggplot(test_data, aes(iteration)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("when k=3, lambda=10000")+xlab("Iteration") + ylab("Value")
+
+```

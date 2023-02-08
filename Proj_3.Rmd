@@ -1,0 +1,531 @@
+---
+title: "Homework 3"
+author: "Yuqi Su"
+date: "Due @ 5pm on February 22, 2019"
+header-includes:
+  - \usepackage{bm}
+  - \newcommand{\Real}{\mathbb{R}}
+  - \newcommand{\dom}{{\bf dom}\,}
+  - \newcommand{\Tra}{^{\sf T}} % Transpose
+  - \newcommand{\Inv}{^{-1}} % Inverse
+  - \def\vec{\mathop{\rm vec}\nolimits}
+  - \newcommand{\diag}{\mathop{\rm diag}\nolimits}
+  - \newcommand{\tr}{\operatorname{tr}} % Trace
+  - \newcommand{\epi}{\operatorname{epi}} % epigraph
+  - \newcommand{\V}[1]{{\bm{\mathbf{\MakeLowercase{#1}}}}} % vector
+  - \newcommand{\VE}[2]{\MakeLowercase{#1}_{#2}} % vector element
+  - \newcommand{\Vn}[2]{\V{#1}^{(#2)}} % n-th vector
+  - \newcommand{\Vtilde}[1]{{\bm{\tilde \mathbf{\MakeLowercase{#1}}}}} % vector
+  - \newcommand{\Vhat}[1]{{\bm{\hat \mathbf{\MakeLowercase{#1}}}}} % vector
+  - \newcommand{\VtildeE}[2]{\tilde{\MakeLowercase{#1}}_{#2}} % vector element
+  - \newcommand{\M}[1]{{\bm{\mathbf{\MakeUppercase{#1}}}}} % matrix
+  - \newcommand{\ME}[2]{\MakeLowercase{#1}_{#2}} % matrix element
+  - \newcommand{\Mtilde}[1]{{\bm{\tilde \mathbf{\MakeUppercase{#1}}}}} % matrix
+  - \newcommand{\Mbar}[1]{{\bm{\bar \mathbf{\MakeUppercase{#1}}}}} % matrix
+  - \newcommand{\Mn}[2]{\M{#1}^{(#2)}} % n-th matrix
+output: pdf_document
+---
+
+**Part 1.** We will construct and analyze the convergence of an MM algorithm for fitting the smoothed least absolute deviations (LAD) regression. We first set some notation: $\V{x}_i \in \Real^p, y_i \in \Real$ for $i=1, \ldots, n$ and $\epsilon > 0$. Throughout Part 1, assume that $n > p$ and that the design $\M{X} \in \Real^{n\times p}$ is full rank. Recall the objective function in smoothed LAD regression is
+$$
+\ell(\V{\beta}) = \sum_{i=1}^n \sqrt{(y_i - \V{x}_i\Tra \V{\beta})^2 + \epsilon}.
+$$
+
+1. Prove that the function $f_\epsilon(u) = \sqrt{u + \epsilon}$ is concave on its domain $[0, \infty)$. $\\$
+$\textbf{Proof:}\\$
+Since the domain $[0, \infty)$ is convex, for $u_1, u_2\in[0, \infty)$, and $\forall \alpha\in [0,1]$, we have:$\\$
+$$
+(\sqrt{u_1+\epsilon}-\sqrt{u_2+\epsilon})^2\geq 0
+$$
+$$
+\Longleftrightarrow (u_1+\epsilon)+(u_2+\epsilon)-2\sqrt{(u_1+\epsilon)(u_2+\epsilon)}\geq 0
+$$
+$$
+\Longleftrightarrow u_1+u_2+2\epsilon\geq 2\sqrt{(u_1+\epsilon)(u_2+\epsilon)}
+$$
+Multiply $\alpha(1-\alpha)$ on each term and we get:
+$$
+\Longleftrightarrow \alpha(1-\alpha)u_1+\alpha(1-\alpha)u_2+2\alpha(1-\alpha)\epsilon\geq 2\alpha(1-\alpha)\sqrt{(u_1+\epsilon)(u_2+\epsilon)}
+$$
+$$
+\Longleftrightarrow (\alpha-\alpha^2)u_1+((1-\alpha)-(1-\alpha)^2)u_2+\epsilon-\alpha^2\epsilon-(1-\alpha)^2\epsilon\geq2\alpha(1-\alpha)\sqrt{(u_1+\epsilon)(u_2+\epsilon)}
+$$
+$$
+\Longleftrightarrow \alpha u_1+(1-\alpha)u_2+\epsilon\geq \alpha^2(u_1+\epsilon)+(1-\alpha)^2(u_2+\epsilon)+2\alpha(1-\alpha)\sqrt{(u_1+\epsilon)(u_2+\epsilon)}
+$$
+$$
+\Longleftrightarrow \alpha u_1+(1-\alpha)u_2+\epsilon\geq(\alpha\sqrt{u_1+\epsilon}+(1-\alpha)\sqrt{u_2+\epsilon})^2
+$$
+Taking square root on both sides and we get:
+$$
+\Longleftrightarrow \sqrt{\alpha u_1+(1-\alpha)u_2+\epsilon}\geq \alpha\sqrt{u_1+\epsilon}+(1-\alpha)\sqrt{u_2+\epsilon}
+$$
+$$
+\Longleftrightarrow -\sqrt{\alpha u_1+(1-\alpha)u_2+\epsilon}\leq -\alpha\sqrt{u_1+\epsilon}-(1-\alpha)\sqrt{u_2+\epsilon}
+$$
+$$
+\Longleftrightarrow -f_{\epsilon}(\alpha u_1+(1-\alpha)u_2)\leq -\alpha f_{\epsilon}(u_1)-(1-\alpha)f_{\epsilon}(u_2)
+$$
+This means $-f_{\epsilon}(u)$ is a convex function on domain $[0,\infty)$, by definition, we know $f_{\epsilon}(u)$ is a concave function on domain $[0,\infty)$. $\\$
+Proof completed. $\\$ $\\$
+$\\$
+
+
+
+
+2. Fix $\tilde{u} \in [0, \infty)$. Prove that
+$$
+g_\epsilon(u\mid \tilde{u}) = \sqrt{\tilde{u} + \epsilon} + \frac{u - \tilde{u}}{2\sqrt{\tilde{u} + \epsilon}}
+$$
+majorizes $f_\epsilon(u)$.
+
+Using the univariate majorization above enables us to construct a majorization of $\ell(\V{\beta})$, namely
+$$
+g(\V{\beta} \mid \Vtilde{\beta}) = \sum_{i=1}^n g_\epsilon(r_i(\V{\beta})^2 \mid r_i(\Vtilde{\beta})^2),
+$$
+where $r_i(\V{\beta}) = (y_i - \V{x}_i\Tra\V{\beta})$ is the $i$th residual.
+$\\$
+$\textbf{Proof:}\\$
+(a) $\\ \begin{aligned}g_{\epsilon}(u\mid \tilde{u})&=\sqrt{\tilde{u}+\epsilon}+\frac{\tilde{u}-\tilde{u}}{2\sqrt{\tilde{u}+\epsilon}}\\ &=\sqrt{\tilde{u}+\epsilon}\\&=f_{\epsilon}(\tilde{u})\end{aligned}\\$
+(b)$\\$ For $\forall u\in[0,\infty)$, we have $\\$ $\begin{aligned}g_{\epsilon}(u\mid\tilde{u})&=\sqrt{\tilde{u}+\epsilon}+\frac{u-\tilde{u}}{2\sqrt{\tilde{u}+\epsilon}}\\&=\frac{2(\tilde{u}+\epsilon)+u-\tilde{u}}{2\sqrt{\tilde{u}+\epsilon}}\\&=\frac{(u+\epsilon)+(\tilde{u}+\epsilon)}{2\sqrt{\tilde{u}+\epsilon}}\end{aligned}\\$ $\\$
+We also have:$\\$
+$$
+(\sqrt{u+\epsilon}-\sqrt{\tilde{u}+\epsilon})^2\geq 0
+$$
+$$
+\Longleftrightarrow (u+\epsilon)-2\sqrt{u+\epsilon}\sqrt{\tilde{u}+\epsilon}+(\tilde{u}+\epsilon)\geq 0
+$$
+$$
+\Longleftrightarrow (u+\epsilon)+(\tilde{u}+\epsilon)\geq 2\sqrt{u+\epsilon}\sqrt{\tilde{u}+\epsilon}
+$$
+Since $\sqrt{\tilde{u}+\epsilon}\geq 0$, then we have: $\\$
+$$
+\frac{\sqrt{u+\epsilon}+\sqrt{\tilde{u}+\epsilon}}{2\sqrt{\tilde{u}+\epsilon}}\geq \sqrt{u+\epsilon}=f_{\epsilon}(u)
+$$
+Hence we get: $\\$
+$$
+g_{\epsilon}(u\mid\tilde{u})=\frac{\sqrt{u+\epsilon}+\sqrt{\tilde{u}+\epsilon}}{2\sqrt{\tilde{u}+\epsilon}}\geq \sqrt{u+\epsilon}=f_{\epsilon}(u) \text{\ \ \ \ for }\forall u\in[0,\infty)
+$$
+Therefore, by definition, we know $g_{\epsilon}(u\mid\tilde{u})$ majorized $f_{\epsilon}(u)$.
+
+$\\$
+$\\$
+$\\$
+
+
+
+3. Derive the MM update, namely write an explicit formula for
+$$
+\V{\beta}^+ = \underset{\V{\beta}}{\arg\min}\; g(\V{\beta} \mid \Vtilde{\beta}).
+$$
+$\\$
+$\textbf{Solution:}\\$
+According to what we have, we know that: $\\$
+$$
+\V{\beta}^+=\underset{\V{\beta}}{\arg\min}\;\sum_{i=1}^{n}\left(\sqrt{(y_i-\V{x}_i^{\top}\Vtilde{\beta})^2+\epsilon}+\frac{(y_i-\V{x_i^{\top}\V{\beta}})^2-(y_i-\V{x_i}^{\top}\Vtilde{\beta})^2}{2\sqrt{(y_i-\V{x_i}^{\top}\Vtilde{\beta})^2+\epsilon}}\right)
+$$
+Taking gradient and we get:
+$$
+\begin{aligned}
+\nabla\tilde{g}(\V{\beta})&=\sum_{i=1}^n\frac{2(y_i-\V{x_i}^{\top}\V{\beta})(-\V{x_i}^{\top})}{2\sqrt{(y_i-\V{x_i}^{\top}\Vtilde{\beta})^2+\epsilon}}\\
+&=\sum_{i=1}^n\frac{\V{x_i}(\V{x_i}^{\top}\V{\beta}-y_i)}{\sqrt{(y_i-\V{x_i}^{\top}\Vtilde{\beta})^{\top}(y_i+\V{x_i}^{\top}\Vtilde{\beta})+\epsilon}}
+\end{aligned}
+$$
+Set $\nabla\tilde{g}(\V{\beta})=0$, and we have:
+$$
+\sum_{i=1}^n\frac{\V{x_i}\V{x_i}^{\top}\V{\beta}}{\sqrt{(y_i-\V{x_i}^{\top}\Vtilde{\beta})^{\top}(y_i+\V{x_i}^{\top}\Vtilde{\beta})+\epsilon}}=\sum_{i=1}^n\frac{\V{x_i}y_i}{\sqrt{(y_i-\V{x_i}^{\top}\Vtilde{\beta})^{\top}(y_i+\V{x_i}^{\top}\Vtilde{\beta})+\epsilon}}
+$$
+which implies
+$$
+\V{\beta}\left(\sum_{i=1}^n\frac{\V{x_i}\V{x_i}^{\top}}{\sqrt{(y_i-\V{x_i}^{\top}\Vtilde{\beta})^{\top}(y_i+\V{x_i}^{\top}\Vtilde{\beta})+\epsilon}} \right)=\sum_{i=1}^n\frac{\V{x_i}y_i}{\sqrt{(y_i-\V{x_i}^{\top}\Vtilde{\beta})^{\top}(y_i+\V{x_i}^{\top}\Vtilde{\beta})+\epsilon}}
+$$
+Thus we have:
+$$
+\V{\beta}=\left(\sum_{i=1}^n\frac{\V{x_i}\V{x_i}^{\top}}{(y_i-\V{x_i}^{\top}\Vtilde{\beta})^2+\epsilon}\right)^{-1}\left(\sum_{i=1}^n\frac{\V{x_i}y_i}{(y_i-\V{x_i}^{\top}\Vtilde{\beta})^2+\epsilon} \right)
+$$
+This is the explicit formula for the MM update.$\\$  $\\$  $\\$
+
+
+4. What is the computational complexity of computing the MM update?
+$\\$
+$\textbf{Solution:}\\$
+Let us compute the computational complexity of MM update: $\\$
+(1) compute $\V{x_i}\V{x_i}^{\top}\Rightarrow\mathcal{O}(p^2)$ flops;
+(2) compute $\V{x_i}^{\top}\V{\beta}\Rightarrow\mathcal{O}(p^2)$ flops;
+(3) compute $y_i-\V{x_i}^{\top}\V{\beta}\Rightarrow 1$ flop;
+(4) compute $(y_i-\V{x_i}^{\top}\V{\beta})^2\Rightarrow1$ flop;
+(5) compute $(y_i-\V{x_i}^{\top}\V{\beta})^2+\epsilon\Rightarrow1$ flop;
+(6) compute $\sqrt{(y_i-\V{x_i}^{\top}\V{\beta})^2+\epsilon}\Rightarrow1$ flop;
+(7) compute $\frac{\V{x_i}\V{x_i}^{\top}}{(6)}\Rightarrow\mathcal{O}(p^2)$ flops;
+(8) compute $\sum_{i=1}^n(7)\Rightarrow\mathcal{O}(np^2)$ flops;
+(9) compute $(8)^{-1}\Rightarrow\mathcal{O}(p^3)$ flops;
+(10) compute $\V{x_i}y_i\Rightarrow\mathcal{O}(p)$ flops;
+(11) compute $\frac{(10)}{(6)}\Rightarrow1$ flop;
+(12) compute $\sum_{i=1}^n(11)\Rightarrow\mathcal{O}(np)$ flops;
+(13) compute $(9)(12)\Rightarrow\mathcal{O}(p^2)$ flops;$\\$
+Since we know $n>p$, then $\mathcal{O}(np^2)>\mathcal{O}(p^3)$, hence the computational complexity of computing the MM update is $\mathcal{O}(np^2)$ $\\$ $\\$ $\\$
+
+$\\$
+
+5. Prove that $\ell(\V{\beta})$ has a unique global minimum for all $\epsilon > 0$.
+$\\$
+$\textbf{Proof:}\\$
+Since $\ell(\V{\beta}) = \sum_{i=1}^n \sqrt{(y_i - \V{x}_i\Tra \V{\beta})^2 + \epsilon}$, then taking gradient of $\ell(\V{\beta})$, then we have:
+$$
+\begin{aligned}
+\nabla\ell(\V{\beta})&=\frac{\partial\sum_{i=1}^n\sqrt{(y_i-\V{x_i}^{\top}\V{\beta})^2+\epsilon}}{\partial \V{\beta}}\\
+&=\sum_{i=1}^n\frac{1}{2}\{(y_i-\V{x_i}^{\top}\V{\beta})^2+\epsilon\}^{-\frac{1}{2}}2(y_i-\V{x_i}^{\top}\V{\beta})(-\V{x_i})\\
+&=\sum_{i=1}^n\frac{(\V{x_i}^{\top}\V{\beta}-y_i)\V{x_i}}{\sqrt{(y_i-\V{x_i}^{\top}\V{\beta})^2+\epsilon}}
+\end{aligned}
+$$
+Then, taking second-order gradient, we have:
+$$
+\begin{aligned}
+\nabla^{2}\ell(\V{\beta})&=\sum_{i=1}^n\frac{\V{x_i}^{\top}\V{x_i}\sqrt{(y_i-\V{x_i}^{\top}\V{\beta})^2+\epsilon}+(\V{x_i}^{\top}\V{\beta-y_i})\V{x_i}^{\top}\{(y_i-\V{x_i}^{\top}\V{\beta})^2+\epsilon\}^{-\frac{1}{2}}(y_i-\V{x_i}^{\top}\V{\beta})(\V{x_i})}{(y_i-\V{x_i}^{\top}\V{\beta})^2+\epsilon}\\
+&=\sum_{i=1}^n\frac{\V{x_i}^{\top}\{\V{x_i(y_i-\V{x_i}^{\top}\V{\beta})^2+\epsilon\}}-(\V{x_i}^{\top}\V{\beta}-y_i)^2\V{x_i}^{\top}\V{x_i}}{(y_i-\V{x_i}^{\top}\V{\beta})^{\frac{3}{2}}+\epsilon}\\
+&=\sum_{i=1}^n\frac{\V{x_i}^{\top}\V{x_i}\epsilon}{(y_i-\V{x_i}^{\top}\V{\beta})^{\frac{3}{2}}+\epsilon}
+\end{aligned}
+$$
+Since $\epsilon>0$, and we know $\sum_{i=1}^n\V{x_i}^{\top}\V{x_i}>0$, then $\sum_{i=1}^n\frac{\V{x_i}^{\top}\V{x_i}\epsilon}{(y_i-\V{x_i}^{\top}\V{\beta})^{\frac{3}{2}}+\epsilon}>0$. This implies $d^2\ell(\V{\beta})$ is positive definite for all $\V{\beta}$, then $\ell(\V{\beta})$ is strictly convex.$\\$
+From MM update, we know $\ell(\V{}\beta)$ has local minima, then according to our proposition introduced in class, we know that $\ell{\V{\beta}}$ has a global minimum, and the global minimum is unique for all $\epsilon>0$.
+$\\$  $\\$ $\\$ $\\$
+
+
+6. Fix $\epsilon > 0$. Use the version of Meyer's monotone convergence theorem discussed in class to prove that the algorithm using the updates you derived in 3 converges to the unique global minimum of $\ell(\V{\beta})$.
+$\\$
+$\textbf{Proof}:\\$
+Step 1: Check continuity of the objective: $\ell(\V{\beta})$ is continuous.
+Step 2: Check continuity of the algorithm map: The map $\psi(\V{\beta})=\left(\sum_{i=1}^n\frac{\V{x_i}\V{x_i}^{\top}}{(y_i-\V{x_i}^{\top}\Vtilde{\beta})^2+\epsilon}\right)^{-1}\left(\sum_{i=1}^n\frac{\V{x_i}y_i}{(y_i-\V{x_i}^{\top}\Vtilde{\beta})^2+\epsilon} \right)$ is continuous for $\V{\beta}$, then we know the map is continuous.
+Step 3: Check the strict decrease for non-fixed points:
+Since $\V{\beta}^+ = \underset{\V{\beta}}{\arg\min}\; g(\V{\beta} \mid \Vtilde{\beta})$, then we have:
+$$
+\ell(\Vtilde{\beta})=g(\Vtilde{\beta} \mid\Vtilde{\beta})
+$$
+$$
+\ell({\V{\beta}})\leq g(\V{\beta}\mid \Vtilde{\beta})
+$$
+Then we have:
+$$
+\ell(\Vtilde{\beta})=g(\Vtilde{\beta} \mid\Vtilde{\beta})> g(\V{\beta^+}\mid \Vtilde{\beta})\geq \ell({\V{\beta}^+})
+$$
+Hence we have $\ell(\psi(\V{\beta}))<\ell(\V{\beta})$
+Since $\psi(\V{\beta})\neq \V{\beta}$, then the strictly inequality works.
+Step 4. Check that the iterate sequence is contained in a compact set:
+$\ell(\V{\beta})$ is continuous, and when $\|\V{\beta}\|\rightarrow\infty$, we know $\V{x_i}^{\top}\V{\beta}$ also goes to infinity, thus $\ell(\V{\beta})\rightarrow\infty$, hence we get:
+$$
+\lim_{\|\V{\beta}\|\rightarrow\infty}\ell(\V{\beta})=+\infty
+$$
+Hence, $\ell(\V{\beta})$ is coercive. Then sublevel sets of $\ell$ is compact, i.e. $\mathcal{L}_{\ell}(\V{\beta_0})=\{\V{\beta}\in\mathcal{D}:\ell(\V{\beta})\leq \ell(\V{\beta_0})\}$ is compact for any $\V{\beta_0}$. 
+Then by Meyer's monotone convergence theorem, the limit points of $\V{\beta_n}$ are fixed points of $\psi$. But fixed points of $\psi$ are also stationary points of $\ell$. Therefore, the limit points of $\V{\beta_n}$ are stationary points of $\ell$. Since from part (5) we know $\ell(\V{\beta})$ has a unique global minimum, it has exactly one stationary point and therefore $\V{\beta_n}$ has exactly one limit point. A bounded sequence with exactly one limit point will converge to that limit point. Therefore, $\V{\beta_n}$ converges to $\V{\beta}^*$, which is the global minimizer. 
+
+
+
+
+\newpage
+
+**Part 2.** MM algorithm for smooth LAD regression and Newton's method
+
+Please complete the following steps.
+
+**Step 1:** Write a function "smLAD" that implements the MM algorithm derived above for smooth LAD regression
+
+```{r, echo=TRUE}
+#' MM algorithm for smooth LAD regression
+#'
+#' @param X design matrix
+#' @param y response
+#' @param beta Initial regression coefficient vector
+#' @param epsilon smoothing parameter
+#' @param max_iter maximum number of iterations
+#' @param tol convergence tolerance
+#smLAD <- function(X,y,beta,epsilon=0.25,max_iter=1e2,tol=1e-3) {
+
+#}
+```
+Your function should return
+
+- The final iterate value
+- The objective function values
+- The relative change in the function values
+- The relative change in the iterate values
+
+**Step 2:** Apply smoothed LAD regression and least squares regression on the telephone data below. Plot the two fitted lines and data points.
+
+```{r, echo=TRUE}
+## Number of International Calls from Belgium,
+## taken from the Belgian Statistical Survey,
+## published by the Ministry of Economy,
+##
+## 73 subjects, 2 variables:
+##  Year(x[i])
+##  Number of Calls (y[i], in tens of millions)
+##
+## http://www.uni-koeln.de/themen/statistik/data/rousseeuw/
+## Datasets used in Robust Regression and Outlier Detection (Rousseeuw and Leroy, 1986).
+## Provided on-line at the University of Cologne.
+x <- c(50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68,
+  69, 70, 71, 72, 73)
+y <- c(0.44, 0.47, 0.47, 0.59, 0.66, 0.73, 0.81, 0.88, 1.06, 1.20, 1.35, 1.49, 1.61,
+  2.12, 11.90, 12.40, 14.20, 15.90, 18.20, 21.20, 4.30, 2.40, 2.70, 2.90)
+
+x1<-(rep(1,length(x)))
+X<-cbind(x1,x)
+
+library(ysu25ST790)
+y<-as.matrix(y)
+beta<-rep(1,ncol(X))
+slad<-smLAD(X,y,beta,epsilon=0.25,max_iter=1e2,tol=1e-3)
+objvalue<-slad$'final iterate value'
+objvalue1<-slad$"objective function values"
+fl1<- as.numeric(X %*% objvalue)  ###LAD regression
+
+
+res <- lm(y~x)
+vec<-res$coefficients
+vect<-vec[1]+vec[2]*x  ### LS regression
+fl2<-vect
+
+library(ggplot2)
+library(scales)
+
+data1<-fl1
+data2<-fl2
+test_data <-
+  data.frame(
+    data1,
+    data2,
+    x
+  )
+
+ggplot(test_data,aes(x)) + 
+  geom_line(aes(y = data1, colour = "LAD regression")) + 
+  geom_line(aes( y = data2, colour = "LS regression"))+
+  geom_point(aes(y=y, colour="data points")) +
+  ggtitle("plot of two fitted lines and data points")+xlab("x") + ylab("Value")
+
+
+
+```
+
+**Step 3:** Plot the objective function values for smooth LAD evaluated at the MM iterate sequence, i.e. $\ell(\beta^{(k)})$ versus $k$.
+```{r, echo=TRUE}
+
+##plot the objective function values for smooth LAD evaluated at the MM iterate sequence
+library(ggplot2)
+library(scales)
+test_data <-
+  data.frame(
+    data=objvalue1,
+    k = seq(1,length(objvalue1))
+  )
+
+ggplot(test_data, aes(k)) + 
+  geom_point(aes(y = data, colour = "point")) + 
+  geom_line(aes(y = data, colour = "line"))+
+  ggtitle("plot of obj function values for smooth LAD")+xlab("k") + ylab("Value")
+
+
+
+```
+
+\newpage
+
+For the rest of Part 2, we will investigate the effect of using the Sherman-Morrison-Woodbury identity in improving the scalability of the Newton's method algorithm for ridge logistic regression discussed in class. We seek to minimize the following objective function
+$$
+\ell(\V{\beta}) = \sum_{i=1}^n \left [- y_i \V{x}_i\Tra \V{\beta} + \log(1 + \exp(\V{x}_i\Tra\V{\beta})) \right] + \frac{\lambda}{2} \lVert \V{\beta} \rVert_2^2
+$$
+Let $W(\V{\beta})$ be a $n \times n$ diagonal matrix with $i$th diagonal entry $w_{ii} = p_i(\V{\beta})[1-p_i(\V{\beta})]$ where $p_i(\V{\beta}) = \exp(\V{x}_i\Tra \V{\beta})/[1 + \exp(\V{x}_i\Tra\V{\beta})]$.
+
+**Step 4:** Write a function "newton_step_naive" that computes the solution $\Delta \V{\beta}_{\text{nt}}$ to the linear system
+$$
+(\lambda \M{I} + \M{X}\Tra \M{W}(\V{\beta})\M{X})\Delta \V{\beta}_{\text{nt}} = \nabla \ell(\V{\beta}).
+$$
+Use the **chol**, **backsolve**, and **forwardsolve** functions in the base package. The **plogis** function will also be helpful for computing $W(\V{\beta})$.
+
+```{r, echo=TRUE}
+#' Compute Newton Step (Naive) for logistic ridge regression
+#'
+#' @param X Design matrix
+#' @param beta Current regression vector estimate
+#' @param g Gradient vector
+#' @param lambda Regularization parameter
+#newton_step_naive <- function(X, y, beta, g, lambda) {
+
+#}
+```
+Your function should return the Newton step $\Delta \V{\beta}_{\text{nt}}$.
+
+**Step 5:** Write a function "newton_step_smw" that computes the Newton step using the Sherman-Morrison-Woodbury identity to reduce the computational complexity of computing the Newton step from $\mathcal{O}(p^3)$ to $\mathcal{O}(n^2p)$. This is a reduction when $n < p$.
+
+```{r, echo=TRUE}
+#' Compute Newton Step (Sherman-Morrison-Woodbury) for logistic ridge regression
+#'
+#' @param X Design matrix
+#' @param beta Current regression vector estimate
+#' @param g Gradient vector
+#' @param lambda Regularization parameter
+#newton_step_smw <- function(X, y, beta, g, lambda) {
+
+#}
+```
+Your function should return the Newton step $\Delta \V{\beta}_{\text{nt}}$.
+
+\newpage
+
+**Step 6** Write a function "backtrack_descent"
+
+```{r, echo=TRUE}
+#' Backtracking for steepest descent
+#'
+#' @param fx handle to function that returns objective function values
+#' @param x current parameter estimate
+#' @param t current step-size
+#' @param df the value of the gradient of objective function evaluated at the current x
+#' @param d descent direction vector
+#' @param alpha the backtracking parameter
+#' @param beta the decrementing multiplier
+#backtrack_descent <- function(fx, x, t, df, d, alpha=0.5, beta=0.9) {
+
+#}
+```
+Your function should return the selected step-size.
+
+
+**Step 7:** Write functions 'fx_lad' and 'gradf_lad' to compute the objective function and its derivative for ridge LAD regression.
+
+```{r, echo=TRUE}
+#' Objective Function for ridge LAD regression
+#' 
+#' @param y response
+#' @param X design matrix
+#' @param beta regression coefficient vector
+#' @param epsilon smoothing parameter
+#' @param lambda regularization parameter
+#' @export
+#fx_lad <- function(y, X, beta, epsilon=0.25,lambda=0) {
+  
+#}
+
+#' Gradient for ridge LAD regression
+#'
+#' @param y response
+#' @param X design matrix
+#' @param beta regression coefficient vector
+#' @param epsilon smoothing parameter
+#' @param lambda regularization parameter
+#' @export
+#gradf_lad <- function(y, X, beta, epsilon=0.25, lambda=0) {
+  
+#}
+```
+
+**Step 8:** Write the function "lad_newton" to estimate a ridge LAD regression model using damped Newton's method. Terminate the algorithm when half the square of the Newton decrement falls below the tolerance parameter
+
+```{r, echo=TRUE}
+#' Damped Newton's Method for Fitting Ridge LAD Regression
+#' 
+#' @param y response
+#' @param X Design matrix
+#' @param beta Initial regression coefficient vector
+#' @param epsilon smoothing parameter
+#' @param lambda regularization parameter
+#' @param naive Boolean variable; TRUE if using Cholesky on the Hessian
+#' @param max_iter maximum number of iterations
+#' @param tol convergence tolerance
+#lad_newton <- function(y, X, beta, epsilon=0.25,lambda=0, naive=TRUE, max_iter=1e2, tol=1e-3) {
+  
+#}
+```
+
+**Step 9:** Perform LAD ridge regression (with $\lambda = 10$) on the following 3 data examples $(y,X)$ using Newton's method and the naive Newton step calculation. Record the times for each using **system.time**.
+
+```{r, echo=TRUE}
+library(ysu25ST790)
+set.seed(12345)
+## Data set 1
+rt_naive<-c(rep(0,3))
+n <- 200
+p <- 300
+epsilon<-0.25
+alpha<-0.5
+X1 <- matrix(rnorm(n*p),n,p)
+beta0 <- matrix(rnorm(p),p,1)
+y1 <- X1%*%beta0 + rnorm(n)
+rt_naive[1]<-(system.time(lad_newton (y=y1, X=X1, beta=beta0, epsilon=0.25, lambda=10, naive=TRUE, max_iter=1e2, tol=1e-3))[3])/9
+
+
+## Data set 2
+p <- 600
+X2 <- matrix(rnorm(n*p),n,p)
+beta0 <- matrix(rnorm(p),p,1)
+y2 <- X2%*%beta0 + rnorm(n)
+rt_naive[2]<-(system.time(lad_newton (y=y2, X=X2, beta=beta0, epsilon=0.25,lambda=10, naive=TRUE, max_iter=1e2, tol=1e-3))[3])/8
+
+## Data set 3
+p <- 1200
+X3 <- matrix(rnorm(n*p),n,p)
+beta0 <- matrix(rnorm(p),p,1)
+y3 <- X3%*%beta0 + rnorm(n)
+rt_naive[3]<-(system.time(lad_newton (y=y3, X=X3, beta=beta0, epsilon=0.25,lambda=10, naive=TRUE, max_iter=1e2, tol=1e-3))[3])/8
+
+```
+
+**Step 10:** Perform LAD ridge regression (with $\lambda = 10$) on the above 3 data examples $(y,X)$ using Newton's method and the Newton step calculated using the  Sherman-Morrison-Woodbury identity. Record the times for each using **system.time**.
+```{r, echo=TRUE}
+set.seed(12345)
+## Data set 1
+rt_smw<-c()
+n <- 200
+p <- 300
+X1 <- matrix(rnorm(n*p),n,p)
+beta0 <- matrix(rnorm(p),p,1)
+y1 <- X1%*%beta0 + rnorm(n)
+rt_smw[1]<-(system.time(lad_newton (y=y1, X=X1, beta=beta0, epsilon=0.25,lambda=10, naive=FALSE, max_iter=1e2, tol=1e-3))[3])/30
+## Data set 2
+p <- 600
+X2 <- matrix(rnorm(n*p),n,p)
+beta0 <- matrix(rnorm(p),p,1)
+y2 <- X2%*%beta0 + rnorm(n)
+rt_smw[2]<-(system.time(lad_newton (y=y2, X=X2, beta=beta0, epsilon=0.25,lambda=10, naive=FALSE, max_iter=1e2, tol=1e-3))[3])/45
+## Data set 3
+p <- 1200
+X3 <- matrix(rnorm(n*p),n,p)
+beta0 <- matrix(rnorm(p),p,1)
+y3 <- X3%*%beta0 + rnorm(n)
+rt_smw[3]<-(system.time(lad_newton (y=y3, X=X3, beta=beta0, epsilon=0.25,lambda=10, naive=FALSE, max_iter=1e2, tol=1e-3))[3])/110
+rt_smw
+```
+
+
+
+
+**Step 11:** Plot all six run times against $p$. Comment on the how the two run-times scale with $p$ and compare it to what you know about the computational complexity for the two ways to compute the Newton update.
+```{r, echo=TRUE}
+
+test_data <-
+  data.frame(
+    rt_naive,
+    rt_smw,
+    k = c(300,600,1200)
+  )
+
+ggplot(test_data, aes(k)) + 
+  geom_line(aes(y = rt_naive, colour = "naive newton step")) + 
+  geom_line(aes(y = rt_smw, colour = "SMW newton step"))+
+  ggtitle("Plot of all six run times against p")+xlab("p") + ylab("time")
+
+```
+Comment:$\\$
+The run-times of LAD ridge regression using naive Newton step calculation is $\mathcal{O}(p^3)$, which is the cube power of the value of $p$. And the run-times of LAD ridge regression using SMW formula is $\mathcal{O}(n^2p)$, which has linear relationship with $p$. Since here we assume $p>n$, and thus the complexity of SMW is less than that of naive Newton step. $\\$
+About the computational complexity for the two ways to compute the Newton update: $\\$
+Since $$\{\nabla^2\ell(\V{\beta})\}^{-1}=\{\lambda\V{I}+\V{X}^{\top}\V{W}(\V{\beta})\V{X}\}^{-1}$$
+By Woodbury formula, $$\{\nabla^2\ell(\V{\beta})\}^{-1}=\lambda^{-1}\V{I}-\lambda^{-1}\V{X}^{\top}\{\lambda\V{W}(\V{\beta})^{-1}+\V{X}\V{X}^{\top}\}^{-1}\V{X}$$
+And the complexity of calculating $\{\lambda\V{W}(\V{\beta})^{-1}+\V{X}\V{X}^{\top}\}$ is $\mathcal{O}(n^2p)$ while using naive Newton method we know it requires $\mathcal{O}(p^3)$ to calculate the inverse of a matrix. Hence, it is a better way to use Sherman-Morrison-Woodbury smethod to compute the Newton step.
+
+
+
+
+
+
+
+

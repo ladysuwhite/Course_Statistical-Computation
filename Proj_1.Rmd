@@ -1,0 +1,274 @@
+---
+title: "Homework 1"
+author: "Yuqi Su"
+date: "Due @ 5pm on January 25, 2019"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+header-includes:
+- \usepackage{bm}
+- \newcommand{\Real}{\mathbb{R}}
+- \newcommand{\dom}{{\bf dom}\,}
+- \newcommand{\tr}{{\bf tr}\,}
+- \newcommand{\Tra}{^{\sf T}} # Transpose
+- \newcommand{\Inv}{^{-1}} # Inverse
+- \def\vec{\mathop{\rm vec}\nolimits}
+- \newcommand{\V}[1]{{\bm{\mathbf{\MakeLowercase{#1}}}}} # vector
+- \newcommand{\VE}[2]{\MakeLowercase{#1}_{#2}} # vector element
+- \newcommand{\Vn}[2]{\V{#1}^{(#2)}} # n-th vector
+- \newcommand{\Vtilde}[1]{{\bm{\tilde \mathbf{\MakeLowercase{#1}}}}} # vector
+- \newcommand{\Vhat}[1]{{\bm{\hat \mathbf{\MakeLowercase{#1}}}}} # vector
+- \newcommand{\VtildeE}[2]{\tilde{\MakeLowercase{#1}}_{#2}} # vector element
+- \newcommand{\M}[1]{{\bm{\mathbf{\MakeUppercase{#1}}}}} # matrix
+- \newcommand{\ME}[2]{\MakeLowercase{#1}_{#2}} # matrix element
+- \newcommand{\Mtilde}[1]{{\bm{\tilde \mathbf{\MakeUppercase{#1}}}}} # matrix
+- \newcommand{\Mbar}[1]{{\bm{\bar \mathbf{\MakeUppercase{#1}}}}} # matrix
+- \newcommand{\Mn}[2]{\M{#1}^{(#2)}} # n-th matrix
+---
+
+**Part 1.**
+
+1. Let $\M{v} \in \Real^{n \times k}, \M{B} \in \Real^{n_1 \times n_1}, \M{C} \in \Real^{n_2 \times n_2}$, and
+
+$$
+\M{A} = \begin{pmatrix}
+\M{B} & \M{0} \\
+\M{0} & \M{C}
+\end{pmatrix} + \M{V}\M{V}\Tra.
+$$
+
+What is the computational complexity of solving the linear system $\M{A}\V{x} = \V{b}$, if one were to form the matrix $\M{A}$ and then use the $QR$ decomposition as an intermediate step? Include the cost of constructing $\M{A}$ explicitly.
+
+**Answer:**$\\$
+We separate the whole process into five steps:$\\$
+(a) $\M{d}=\M{v}\M{v}\Tra\longrightarrow \mathcal{O}(n^2k)$ flops $\\$
+(b) Adding to matrices: $\begin{pmatrix}\M{B}&\textbf{0}\\\textbf{0}&\M{c}\end{pmatrix}+\M{D}=\begin{pmatrix}\M{B}&\textbf{0}\\\textbf{0}&\M{c}\end{pmatrix}+\M{v}\M{v}\Tra\longrightarrow \mathcal{O}(n^2)$ flops $\\$
+(c) $\M{a}=\M{Q}\M{R}\longrightarrow \mathcal{O}(n^3)$ flops $\\$
+where $\M{Q}\in\Real^{n \times n}$ is orthogonal matrix, and $\M{r}\in\Real^{n \times n}$ is upper triangular matrix with positive diagonal elements.$\\$
+(d) $\V{y}=\M{q}\Tra\V{b}\longrightarrow \mathcal{O}(n^2)$ flops $\\$
+where $\V{b}$ is the vector of the linear system $\M{A}\V{x} = \V{b}$ to be solved.$\\$
+(e) $\M{r}\V{x}=\V{y}\longrightarrow \mathcal{O}(n^2)$ flops $\\$
+where $\V{x}$ is the solution we try to get. $\\$
+Thus, the total work is $\mathcal{O}(\max\{n^2k, n^3\}).$ $\\ \\$ 
+
+
+
+2. Suppose $k \ll n = n_1 + n_2$. Suppose further that
+$\M{B}$ is a $r_1$-banded matrix and $\M{C}$ is an $r_2$-banded matrix. A matrix $\M{Z}$ is $r$-banded if $\ME{z}{ij} = 0$ if $\lvert i - j \rvert > r$. Use the Sherman-Morrison-Woodbury formula (sometimes called the Matrix Inversion Lemma), as well as the fact that solving a $n$-by-$n$, $r$-banded linear system can be done in $\mathcal{O}(nr^2)$ flops via the Cholesky factorization, to solve the linear system in question 1 more efficiently.
+
+**Answer:**$\\$
+Denote the matrix $\begin{pmatrix}\M{B}&\textbf{0}\\\textbf{0}&\M{c}\end{pmatrix}$ as $\M{d}$, then we know $\M{a}=\M{d}+\V{v}\V{v}\Tra\\$
+Assume $\M{a}$ is nonsingular, then $\V{x}=\M{a}^{-1}\V{b}\\$
+According to Sherman-Morrison-Woodbury formula, $$
+\M{a}^{-1}=(\M{d}+\V{v}\V{v}\Tra)^{-1}=\M{d}^{-1}-\frac{(\M{d})^{-1}\V{v}\V{v}\Tra(\M{a})^{-1}}{\M{i}+\V{v}\Tra(\M{a})^{-1}\V{v}}$$
+Then we have $$ \V{x}=(\M{d}+\V{v}\V{v}\Tra)^{-1}\V{b}=\M{d}^{-1}\V{b}-\frac{(\M{d})^{-1}\V{v}\V{v}\Tra(\M{a})^{-1}}{\M{i}+\V{v}\Tra(\M{a})^{-1}\V{v}}\V{b} $$
+Separate the whole process into several steps:$\\$
+(a) Compute $\M{d}$: Since $\M{d}$ is a block matrix, we have $(\M{d})^{-1}=\begin{pmatrix}\M{b}^{-1}&\textbf{0}\\\textbf{0}&\M{c}^{-1}\end{pmatrix}$. Since the inverse operation of a square matrix needs $\mathcal{O}(nr^2)$ flops, where $n$ is the dimemsion of the matrix. Then the complexity of step (a) is $\mathcal{O}(\max(n_1r_1^2,n_2r_2^2))\\$
+(b) Solve $\M{d}\V{z}=\V{v}$, which implies $\V{z}=\M{d}^{-1}\V{v}\longrightarrow \mathcal{O}(n^2k)$ flops $\\$
+(c) Solve $\M{d}\V{y}=\V{b}$, which implies $\V{y}=\M{d}^{-1}\V{b}\longrightarrow\mathcal{O}(n^2)$ flops $\\$
+(d) Compute $\M{i}+\V{v}\Tra\V{z}=\M{i}+\V{v}\Tra(\M{d})^{-1}\V{v}\longrightarrow\mathcal{O}(n^2+nk^2)$ flops $\\$
+Since $k \ll n$, the complexity is only $\mathcal{O}(n^2)\\$
+(e) Compute $\V{d}=\V{v}\Tra\V{y}=\V{v}\Tra\M{d}^{-1}\V{b} \longrightarrow\mathcal{O}(nk)$ flops $\\$
+(f) Compute $$\V{x}=\M{a}^{-1}\V{b}=\V{y}-\frac{\V{z}\V{d}}{\M{i}+\V{v}\Tra\V{z}}=\V{y}-\frac{\V{z}\V{v}\Tra\V{y}}{\M{i}+\V{v}\Tra\V{z}}=\M{d}^{-1}\V{b}-\frac{\V{z}\V{v}\Tra\M{d}^{-1}\V{b}}{\M{i}+\V{v}\Tra\V{z}}  \longrightarrow\mathcal{O}(nk+n) \text{\ flops}$$ 
+Hence, the total work is $\mathcal{O}(\max\{n_1r_1^2, n_2r_2^2, n^2k\}).$
+$\\$
+Remark: Compare this result with what we got in Question #1, since we have $n=n_1+n_2$, and for $r$-banded square matrix with $n$ dimension, we know that $r< n$. Hence, $\mathcal{O}(\max\{n_1r_1^2, n_2r_2^2, n^2k\})\leq \mathcal{O}(\max\{n^2k, n^3\})$, which means we need less complexity using Sherman-Morrison-Woodbury formula than the one we use in Question #1 for such matrices.
+$\\ \\ \\$ 
+
+
+
+
+
+3. Let $f : \Real^n \mapsto \Real$ that is differentiable. Prove that $f$ is convex if and only if
+
+$$
+\langle \nabla f(\V{x}) - \nabla f(\V{y}), \V{x} - \V{y} \rangle \geq 0, \quad\quad\quad \forall \V{x}, \V{y} \in \Real^n.
+$$
+
+**Answer:**
+$\\$
+(a) if $f$ is convex, by proposition of differentiable convex functions, we know for $\forall \V{x}, \V{y} \in \Real^{n}$, we have $$ f(\V{x})\geq f(\V{y})+\nabla f(\V{y})\Tra(\V{x}-\V{y})$$
+$$f(\V{y})\geq f(\V{x})+\nabla f(\V{x})\Tra(\V{y}-\V{x})$$
+Adding to inequalities and we get$$f(\V{x})+f(\V{y})\geq f(\V{y})+f(\V{x})+(\nabla f(\V{y})\Tra-\nabla f(\V{x})\Tra)(\V{x}-\V{y}) $$
+This implies $$(\nabla f(\V{y})-\nabla f(\V{x}))\Tra(\V{x}-\V{y})\leq 0$$
+Then $$(\nabla f(\V{x})-\nabla f(\V{y}))\Tra(\V{x}-\V{y})\geq 0$$
+Hence, $$ \langle \nabla f(\V{x}) - \nabla f(\V{y}), \V{x} - \V{y} \rangle \geq 0, \quad\quad\quad \forall \V{x}, \V{y} \in \Real^n.$$
+(b) For $\forall \V{x}, \V{y}\in\Real^{n}$, define $$g(\alpha)=f(\alpha\V{x}+(1-\alpha)\V{y})\quad\quad\quad\quad \forall \alpha\in[0,1] $$
+We know $g(0)=f(\V{y})$, and $g(1)=f(\V{x})\\$
+Since $f$ is differentiable, then $f$ is continuous, then $g$ is continuous. $\\$
+According to Fundamental Theorem of Calculus, we know that $$g(1)=g(0)+\int_{0}^{1}g^\prime(\alpha) d\alpha$$
+This imples $$g(\V{x})=g(\V{y})+\int_{0}^{1}g^\prime(\alpha) d\alpha$$
+Since $$\begin{aligned}g^\prime(\alpha)&=(\nabla f(\alpha\V{x}+(1-\alpha)\V{y})\Tra)(\V{x}-\V{y})\\ &=\langle\nabla f(\alpha\V{x}+(1-\alpha)\V{y})\Tra, \V{x}-\V{y}\rangle\end{aligned}$$
+Then $$\begin{aligned}f(\V{x})&=f(\V{y})+\int_{0}^{1}\langle\nabla f(\alpha\V{x}+(1-\alpha)\V{y})\Tra, \V{x}-\V{y}\rangle d\alpha\\ &=f(\V{y})+\int_{0}^{1}\langle\nabla f(\alpha\V{x}+(1-\alpha)\V{y})\Tra-\nabla f(\V{y})\Tra, \V{x}-\V{y}\rangle d\alpha+\int_{0}^{1}\langle\nabla f(\V{y})\Tra, \V{x}-\V{y}\rangle d\alpha\end{aligned} $$
+The second term is non-negative since we have $\langle \nabla f(\V{x^\prime}) - \nabla f(\V{y^\prime}), \V{x^\prime} - \V{y^\prime} \rangle \geq 0, \quad\quad \forall \V{x^\prime}, \V{y^\prime} \in \Real^n.\\$ 
+Here $\V{x^\prime}=\alpha\V{x}+(1-\alpha)\V{y}, \V{y^\prime}=\V{y}\\$
+Hence, $$\begin{aligned}f(\V{x})&\geq f(\V{y})+\int_{0}^{1} \langle \nabla f(\V{y})\Tra, \V{x}-\V{y}\rangle d\alpha\\ &=f(\V{y})+\langle \nabla f(\V{y})\Tra, \V{x}-\V{y}\rangle \end{aligned}$$
+This implies $$f(\V{x})\geq f(\V{y})+\nabla f(\V{y})\Tra (\V{x}-\V{y}) \quad\quad\quad \forall \V{x}, \V{y} \in \Real^n.\\$$   $\\ \\$
+
+
+
+4. The Earth Mover's distance or Wasserstein metric is a distance or metric used to compare two probability distributions. See Levina and Bickel 2001 and references therein. Suppose we have two discrete probability distributions $\V{p}$ and $\V{q}$ on the integers $\{1, 2, \ldots, n\}$. So, $\VE{p}{i}$ and $\VE{q}{i}$ are both nonnegative for all $i \in \{1, \ldots, n\}$ and $\V{p}\Tra\V{1} = \V{q}\Tra\V{1} = 1$, where $\V{1}$ is a vector all ones of length $n$. Then we can quantify the distance between $\V{p}$ and $\V{q}$ by the least amount of work it takes to reshape the distribution $\V{p}$ into the distribution $\V{q}$. Let $d(\V{p},\V{q})$ denote the Earth Mover's distance between $\V{p}$ and $\V{q}$.
+
+$$
+d(\V{p}, \V{q}) = \min_{f_{ij}}\; \sum_{i=1}^n\sum_{j=1}^n f_{ij}d_{ij},
+$$
+subject to
+$$
+\begin{aligned}
+\VE{f}{ij} & \geq 0, \quad \forall i, j \\
+\sum_{j=1}^n \VE{f}{ij} & \leq \VE{p}{i}, \quad \forall i \\
+\sum_{i=1}^n \VE{f}{ij} & \leq \VE{q}{j}, \quad \forall j \\
+\sum_{i=1}^n\sum_{j=1}^n \VE{f}{ij} & = 1.
+\end{aligned}
+$$
+
+The $d_{ij}$ are given. These are non-negative distances between $i$ and $j$. The $\VE{f}{ij}$ quantify how much probability we are moving from $\VE{p}{i}$ into $\VE{q}{j}$. Thus, the product $\VE{f}{ij}\VE{d}{ij}$ is the amount of work it takes to move probability mass from $\VE{p}{i}$ into $\VE{q}{j}$. Show that the Earth Mover's distance $d(\V{p},\V{q})$ is convex in $(\V{p},\V{q}) \in [0,1]^{2n}$.
+
+**Answer:**$\\$
+For any $(\V{p}^1, \V{q}^1), (\V{p}^2, \V{q}^2)$  in $(\V{p}, \V{q})\in [0,1]^{2n}$, their Earth Mover's distance are defined as follows:
+$$d(\V{p}^1, \V{q}^1)=\min\limits_{f_{i,j}}\sum_{i=1}^{n}\sum_{j=1}^{n}f_{i,j}d_{i,j}\equiv \sum_{i=1}^{n}\sum_{j=1}^{n}a_{i,j}d_{i,j}$$
+satisfying $$a_{i,j}\geq 0\quad \quad \forall i,j$$
+$$\sum_{j=1}^n a_{i,j}\leq \V{p}_i^1\quad \quad \forall i$$
+$$\sum_{i=1}^n a_{i,j}\leq \V{q}_i^1\quad \quad \forall j$$
+$$\sum_{i=1}^n\sum_{j=1}^n a_{i,j}=1$$
+We also have: 
+$$d(\V{p}^2, \V{q}^2)=\min\limits_{g_{i,j}}\sum_{i=1}^{n}\sum_{j=1}^{n}g_{i,j}d_{i,j}\equiv \sum_{i=1}^{n}\sum_{j=1}^{n}b_{i,j}d_{i,j}$$
+satisfying $$b_{i,j}\geq 0\quad \quad \forall i,j$$
+$$\sum_{j=1}^n b_{i,j}\leq \V{p}_i^2\quad \quad \forall i$$
+$$\sum_{i=1}^n b_{i,j}\leq \V{q}_i^2\quad \quad \forall j$$
+$$\sum_{i=1}^n\sum_{j=1}^n b_{i,j}=1$$
+For $\forall \alpha\in[0,1]$, $$\begin{aligned}(\V{x}, \V{y})&\equiv \alpha(\V{p}^1, \V{q}^1)+(1-\alpha)(\V{p}^2, \V{q}^2)\\
+&=(\alpha\V{p}^1+(1-\alpha)\V{p}^2, \alpha\V{q}^1+(1-\alpha)\V{q}^2)\end{aligned}$$
+Then we can denote $$d(\V{x}, \V{y})=\min\limits_{c_{i,j}}\sum_{i=1}^n\sum_{j=1}^n c_{i,j}d_{i,j}\equiv \sum_{i=1}^n\sum_{j=1}^n m_{i,j}d_{i,j}$$
+Subject to $$c_{i,j}\geq 0\quad \quad \forall i,j$$
+$$\sum_{j=1}^n c_{i,j}\leq \V{x}_i^2\quad \quad \forall i$$
+$$\sum_{i=1}^n c_{i,j}\leq \V{y}_i^2\quad \quad \forall j$$
+$$\sum_{i=1}^n\sum_{j=1}^n c_{i,j}=1$$
+Then we have $$\begin{aligned}\alpha d(\V{p}^1, \V{q}^1)+(1-\alpha)d(\V{p}^2, \V{q}^2)&=\alpha \sum_{i=1}^n\sum_{j=1}^ba_{i,j}d_{i,j}+(1-\alpha)\sum_{i=1}^n\sum_{j=1}^n b_{i,j}d_{i,j}\\ &=\sum_{i=1}^n\sum_{j=1}^n (\alpha a_{i,j}+(1-\alpha) b_{i,j})d_{i,j}\end{aligned}$$
+Since $$\begin{aligned}\sum_{j=1}^n (\alpha a_{i,j}+(1-\alpha)b_{i,j})&=\alpha\sum_{j=1}^n a_{i,j}+(1-\alpha)\sum_{j=1}^n b_{i,j}\\ &\leq \alpha\V{p}_i^1+(1-\alpha)\V{p}_i^2\end{aligned}$$
+$$\begin{aligned}\sum_{i=1}^n (\alpha a_{i,j}+(1-\alpha)b_{i,j})&=\alpha\sum_{i=1}^n a_{i,j}+(1-\alpha)\sum_{i=1}^n b_{i,j}\\ &\leq \alpha\V{p}_j^1+(1-\alpha)\V{p}_j^2\end{aligned}$$
+$$\sum_{i=1}^n\sum_{j=1}^n(\alpha a_{i,j}+(1-\alpha) b_{i,j})d_{i,j}=\alpha+(1-\alpha)=1$$
+Thus $\alpha a_{i,j}+(1-\alpha) b_{i,j}$ is an element in set ${c_{i,j}}\\$
+Then $$\begin{aligned}\alpha(\V{p}^1, \V{q}^1)&=d(\V{x}, \V{y})\\&=\min\limits_{c_{i,j}}\sum_{i=1}^n\sum_{j=1}^n c_{i,j}d_{i,j}\\&\equiv \sum_{i=1}^n\sum_{j=1}^n m_{i,j}d_{i,j}\\ &\leq \sum_{i=1}^n\sum_{j=1}^n (\alpha a_{i,j}+(1-\alpha) b_{i,j})d_{i,j}\\ &=\alpha d(\V{p}^1, \V{q}^1)+(1-\alpha) d(\V{p}^2, \V{q}^2)\end{aligned}$$
+Therefore, by definition of convexity, we know $d(\V{p},\V{q})$ is convex in $(\V{p},\V{q}) \in [0,1]^{2n}$.
+
+
+
+
+\newpage
+
+**Part 2.** Check your gradient formula
+
+You'll very likely need to derive analytical expressions for gradients when writing iterative optimization algorithms. It's very handy to do a numerical check to have some confidence that you derived things carefully. You will add an implementation of a numerical check of a gradient calculation to your R package.
+
+Let $f(\V{x})$ be a multivariate function that takes in a $p$-dimensional vector $\V{x}$ and maps it to a real number. A more compact way to say this is
+$f : \Real^p \mapsto \Real$. We want to check whether we have derived the right formula for the gradient $\nabla f$ of $f$. We do this in the following steps.
+
+1. For fixed vectors $\V{a}, \V{b} \in \Real^p$, define a univariate function $g(t) = f(\V{a} + \V{b}t)$. By the chain rule
+$$
+g'(t) = \langle \nabla f(\V{a} + \V{b}t), \V{b} \rangle,
+$$
+and therefore the directional derivative of $f$ at $\V{a}$ in the direction of $\V{b}$ is given by $g'(0)$, namely
+$$
+df_{\V{b}}(\V{a}) = \left \langle \nabla f(\V{a}), \V{b} \right \rangle.
+$$
+
+2. We compare our formula for $g'(t)$ above with the approximation to its derivative
+$$
+\widehat{df}_{\V{b}}(\V{a},h) = \frac{g(h) - g(0)}{h} = \frac{f(\V{a} + h\V{b}) - f(\V{a})}{h}.
+$$
+
+
+Please complete the following steps.
+
+**Step 0:** Make an R package entitled "unityidST790".
+
+**Step 1:** Write a function "dd_exact."
+
+```{r, echo=TRUE}
+#' Directional Derivative Exact
+#'
+#' \code{dd_exact} computes the exact directional derivative of the multivariate
+#' function f, at the point a, in the direction b.
+#'
+#' @param gradf handle to function that returns the gradient of the function f
+#' @param a point at which the directional derivative is evaluated
+#' @param b the direction vector
+#' @export
+#dd_exact <- function(gradf, a, b) {
+
+#}
+```
+Your function should return $df_{\V{b}}(\V{a})$.
+
+**Step 2:** Write a function "dd_approx."
+
+```{r, echo=TRUE}
+#' Directional Derivative Approximate
+#'
+#' \code{dd_exact} computes an approximate directional derivative of the multivariate
+#' function f, at the point a, in the direction b.
+#'
+#' @param f handle to function that returns the function f
+#' @param a point at which the directional derivative is evaluated
+#' @param b the direction vector
+#' @param h small displacement
+#' @export
+#dg_approx <- function(f, a, b, h = 1e-13) {
+  
+#}
+```
+Your function should return $\widehat{df}_{\V{b}}(\V{a},h)$.
+
+**Step 3:** Let $\M{X} \in \Real^{n \times n}$ be a positive definite matrix and let $f(\M{X}) = \log \det (\M{X})$ be a multivariate function defined over the space of positive definite matrices. Someone told you 
+that the gradient of $f$ is given by
+
+$$
+\nabla f(\M{X}) = -\M{X}\Inv.
+$$
+
+Let's check this formula using the two functions you just wrote. Generate 100 pairs of random positive definite matrices $\M{a}$ and random direction matrices $\M{B}$ that are also positive definite. Compute the exact directional derivatives and approximate directional derivative and create a scatter plot of these pairs of 100 points (exact calculatons versus approximate calculations). Does the formula look correct? If so, why? If not, why and how should you correct the formula?
+
+Comments:
+
+- Take the inner product between two $n$-by-$n$ matrices $\M{U}$ and $\M{V}$ as $\langle \M{U}, \M{V} \rangle = \tr(\M{U}\Tra\M{V})$.
+- The first thing you should do is figure out how you're going to generate a random positive definite matrix.
+
+```{r scatter plot of exact versus approximate directional derivatives, echo=FALSE, fig.width=6, fig.height=3}
+## Put your code here for generating random positive definite matrices
+library(ysu25ST790)  
+n=10  #the dimension of the square matrix A ana B are n\times n
+i=1
+exa<-vector(mode="numeric",length=n^2)  #data vector of exact directional derivative
+appr<-vector(mode="numeric",length=n^2)  #data vector of approximate directional derivative
+  gradf <- function(x){return(-solve(x))}
+  f <- function(x) {return(log(det(x)))}
+for (i in 1:100) #start loop
+{
+  R1<-matrix(rnorm(n*n), nrow=n) #A random matrix
+  c1<-runif(n,2,2) # a vector with positive elements
+  E1<-diag(c1)   #a diagonal matrix with positive diagonal elements
+  a<-t(R1)%*%R1+E1   #matrix a: positive definite
+  R2<-matrix(rnorm(n*n), nrow=n) #A random matrix
+  c2<-runif(n,2,2) # a vector with positive elements
+  E2<-diag(c2)   #a diagonal matrix with positive diagonal elements
+  b<-t(R2)%*%R2+E2  #matrix b: positive definite direction matrix
+  #compute exact directional derivative
+  exa[i]<-dd_exact(gradf, a, b)
+  #compute approximate directional derivative
+  appr[i]<-dd_approx(f,a,b,h = 1e-13) 
+} #end loop
+#plot scatter plot
+plot(x = exa,y = appr,
+     xlab = "exact directional derivative",
+     ylab = "approximate directional derivative",
+     main = "Scatter Plot of 100 Pairs of Points"
+)
+
+```
+As we can see from the scatter plot, the formula looks WRONG since the values of "exact" derivatives has a linearly negative correlation with the values of approximate directional derivatives (nearly follows $y=-x$). However, if the formula is correct, the scatters should fall around the line $y=x$, which means the "exact" values and "approximate" values should be same. 
+We should correct the formula into $\nabla f(\M{X})=\M{X}^{-1}$
+
+
+

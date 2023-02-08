@@ -1,0 +1,440 @@
+---
+title: "Homework 4"
+author: "Yuqi Su"
+date: "Due @ 5pm on March 29, 2019"
+header-includes:
+  - \usepackage{bm}
+  - \usepackage{amsmath}
+  - \newcommand{\Kron}{\otimes} %Kronecker
+  - \newcommand{\Real}{\mathbb{R}}
+  - \newcommand{\dom}{{\bf dom}\,}
+  - \newcommand{\Tra}{^{\sf T}} % Transpose
+  - \newcommand{\Inv}{^{-1}} % Inverse
+  - \def\vec{\mathop{\rm vec}\nolimits}
+  - \newcommand{\diag}{\mathop{\rm diag}\nolimits}
+  - \newcommand{\tr}{\operatorname{tr}} % Trace
+  - \newcommand{\epi}{\operatorname{epi}} % epigraph
+  - \newcommand{\V}[1]{{\bm{\mathbf{\MakeLowercase{#1}}}}} % vector
+  - \newcommand{\VE}[2]{\MakeLowercase{#1}_{#2}} % vector element
+  - \newcommand{\Vn}[2]{\V{#1}^{(#2)}} % n-th vector
+  - \newcommand{\Vtilde}[1]{{\bm{\tilde \mathbf{\MakeLowercase{#1}}}}} % vector
+  - \newcommand{\Vhat}[1]{{\bm{\hat \mathbf{\MakeLowercase{#1}}}}} % vector
+  - \newcommand{\VtildeE}[2]{\tilde{\MakeLowercase{#1}}_{#2}} % vector element
+  - \newcommand{\M}[1]{{\bm{\mathbf{\MakeUppercase{#1}}}}} % matrix
+  - \newcommand{\ME}[2]{\MakeLowercase{#1}_{#2}} % matrix element
+  - \newcommand{\Mtilde}[1]{{\bm{\tilde \mathbf{\MakeUppercase{#1}}}}} % matrix
+  - \newcommand{\Mhat}[1]{{\bm{\hat \mathbf{\MakeUppercase{#1}}}}} % matrix
+  - \newcommand{\Mbar}[1]{{\bm{\bar \mathbf{\MakeUppercase{#1}}}}} % matrix
+  - \newcommand{\Mn}[2]{\M{#1}^{(#2)}} % n-th matrix
+output: pdf_document
+---
+
+**Part 1.** In this homework, you will practice writing equivalent optimization problems.
+
+**1.** Inpainting
+
+In the inpainting problem we seek to fill in missing pixels in an image. Think reconstructing lost or deteriorated parts of a painting. Images tend to be smooth in the sense that a pixel's value tends to be similar to its neighboring pixel values. Thus, a natural strategy to filling in missing pixels is to perform interpolation. We can formalize an interpolation strategy as an LP. We will focus on square gray-scale images but rectangular color images can be delt with similarly. Let $\M{X} \in \{1,\ldots,255 \}^{m\times n}$ denote our estimate of an image with $mn$ pixels. Suppose we only get to observe a subset $\Omega \subset \{1, \ldots,m \} \times \{1, \ldots, n\}$ of the total number of pixels. Let $\V{x}$ denote vec$(\M{X})$, the $mn$ length vector obtained by stacking up all $n$ columns of $\M{X}$. Let $\V{y} \in \Real^{\lvert \Omega \rvert}$ denote the values of the image over the subset of observed pixels, and let $\M{D}_m$ denote the first-order differencing matrix:
+$$
+\M{D}_m = \begin{pmatrix}
+1 & -1 & 0      &   & \\
+0 & 1  & -1     & 0 & \\
+  &    & \ddots & \ddots & \\
+  &    &        & 1      & -1 \\
+\end{pmatrix} \in \Real^{(m-1) \times m}.
+$$
+The matrix $\M{D}_m\M{X}$ is the $(m-1) \times n$ matrix obtained by differencing adjacent rows. The matrix $\M{X}\M{D}_n\Tra$ is the $m \times (n-1)$ matrix obtained by differencing adjacent columns. We can enforce smoothness in adjacent horizontal and vertical pixels by seeking an $\M{X}$ that minimizes the sum of the absolute values of the entries of the matrices $\M{D}_m\M{X}$ and $\M{D}_n\M{X}\Tra$, namely
+$$
+f(\M{X}) = \left [\sum_{j=1}^{n}\sum_{i=1}^{m-1} \lvert x_{i,j} - x_{i+1,j} \rvert \right ] + \left [\sum_{i=1}^{m}\sum_{j=1}^{n-1} \lvert x_{i,j} - x_{i,j+1} \rvert \right ]
+$$
+
+**(a)** Find the matrix $\Mhat{D}$ such that $f(\M{X}) = \lVert \Mhat{D}\V{x} \rVert_1$. Hint: Use the identity vec$(\M{A}\M{B}\M{C}) = [\M{C}\Tra \Kron \M{A}]$vec$(\M{B})$.
+
+Inpainting can be solved by solving the following optimization problem.
+$$
+\begin{aligned}
+&\text{minimize}\; \lVert \Mhat{D}\V{x} \rVert_1 \\
+&\text{subject to}\; P_\Omega \V{x} = \V{y}, \V{x} \geq 0,
+\end{aligned}
+$$
+where $P_\Omega \in \{0,1\}^{\lvert \Omega \rvert \times mn}$ is a matrix that maps $\V{x}$ to a smaller vector $P_\Omega \V{x}$ corresponding to the estimate $\V{x}$ at the observed indices.
+$\\$ $\\$
+$\textbf{Solution:}\\$
+According to the definition and construction of differencing matrix, if we denote $$\M{X}=\begin{pmatrix}x_{11}&x_{12}&\cdots&x_{1n}\\x_{21}&x_{22}&\cdots&x_{2n}\\\vdots&\ddots&&\\x_{m1}&x_{n2}&\cdots&x_{mn}\end{pmatrix}$$
+
+Then we have:
+$$\M{D}_m\M{X}=\begin{pmatrix}x_{11}-x_{21}&x_{12}-x_{22}&\cdots&x_{1n}-x_{2n}\\x_{21}-x_{31}&&&\\\vdots&\ddots&&\\x_{(m-1),1}-x_{m1}&x_{(m-1),2}-x_{m2}&\cdots&x_{(m-1),n}-x_{mn}\end{pmatrix}$$
+$$\M{X}\M{D}_n^{\top}=\begin{pmatrix}x_{11}-x_{12}&x_{12}-x_{13}&\cdots&x_{1,(n-1)}-x_{1n}\\x_{21}-x_{22}&&&\\\vdots&\ddots&&\\x_{m,1}-x_{m2}&x_{m,2}-x_{m3}&\cdots&x_{m,(n-1)}-x_{mn}\end{pmatrix}$$
+We also know that:
+$$f(\M{X}) = \left [\sum_{j=1}^{n}\sum_{i=1}^{m-1} \lvert x_{i,j} - x_{i+1,j} \rvert \right ] + \left [\sum_{i=1}^{m}\sum_{j=1}^{n-1} \lvert x_{i,j} - x_{i,j+1} \rvert \right ]$$
+Denote first term $\left [\sum_{j=1}^{n}\sum_{i=1}^{m-1} \lvert x_{i,j} - x_{i+1,j} \rvert \right ]$ as $(1)$, and second term $\left [\sum_{j=1}^{n}\sum_{i=1}^{m-1} \lvert x_{i,j} - x_{i+1,j} \rvert \right ]$ as $(2)$ $\\$
+Then, $$(1)=\|vec(\M{D}_m\M{X})\|_1=\|vec(\M{D}_m\M{X}\M{I}_n)\|_1=\|(\M{I}_n \Kron \M{D}_m)vex(\M{X})\|_1$$
+where the second equation works because it doesn't affect final result if an identity matrix is multipled from the right side, and the third equation works according to the hint.$\\$
+Similarly, 
+$$(2)=\|vec(\M{X}\M{D}_n^{\top})\|_1=\|vec(\M{I}_m\M{X}\M{D}_n^{\top})\|_1=\|(\M{D}_n \Kron \M{I}_m)vex(\M{X})\|_1$$
+By letting $\Mhat{D}=\begin{pmatrix}\M{I}_n \Kron \M{D}_m\\ \M{D}_n \Kron \M{I}_m\end{pmatrix}$, we have:
+$$\begin{aligned}f(\M{X})=\|\Mhat{D}\V{x}\|_1&=\| \begin{pmatrix}(\M{I}_n \Kron \M{D}_m)\ vec(\M{X})\\ (\M{D}_n \Kron \M{I}_m)\ vec(\M{X})\end{pmatrix} \|_1\\&=\|(\M{I}_n \Kron \M{D}_m)\ vec(\M{X})\|_1+\|(\M{I}_n \Kron \M{D}_m)\ vec(\M{X})\|_1\\&=(1)+(2)\end{aligned}$$
+Hence, 
+$$\Mhat{D}=\begin{pmatrix}\M{I}_n \Kron \M{D}_m\\ \M{D}_n \Kron \M{I}_m\end{pmatrix}$$
+
+
+\newpage
+**(b)** Formulate the above optimization problem as an LP.
+$\\$ $\\$
+$\textbf{Solution:}\\$
+Split $\Mhat{D}\V{x}$ into $\Mhat{D}\V{x}=\V{r}^{+}-\V{r}^{-}$, then the primal problem can be rewritten as:
+$$
+\begin{aligned}
+\min_{\V{x}, \V{r}^{+},\V{r}^{-}}&\V{r}^{+}-\V{r}^{-}\\
+\text{subject to}\; &\V{r}^{+}-\V{r}^{-}=\Mhat{D}\V{x}\\
+&P_\Omega\V{x}=\V{y}\\
+&\V{r}^{+},\V{r}^{-},\V{x}\geq 0
+\end{aligned}
+$$
+This can be write as a LP in the form:
+$$\min_{\V{x},\V{r}^{+},\V{r}^{-}}\underbrace{\begin{pmatrix}\textbf{1}^{\top}&\textbf{1}^{\top}&\textbf{0}\end{pmatrix}}_{\textbf{c}^{\top}}\underbrace{\begin{pmatrix}\V{r}^{+}\\\V{r}^{-}\\ \V{x}\end{pmatrix}}_{\V{x}}
+$$
+subject to $\\$
+$$\underbrace{\begin{pmatrix}\M{I}& -\M{I}&-\Mhat{D}\\ \textbf{0}&\textbf{0}&P_\Omega\end{pmatrix}}_{\M{A}}\underbrace{\begin{pmatrix}\V{r}^{+}\\\V{r}^{-}\\ \V{x}\end{pmatrix}}_{\V{x}}=
+\underbrace{\begin{pmatrix}\textbf{0}\\ \V{y}\end{pmatrix}}_{\V{b}}
+$$
+$$
+\underbrace{\begin{pmatrix}-\M{I}&\textbf{0}&\textbf{0}\\\textbf{0}&-\M{I}&\textbf{0}\\\textbf{0}&\textbf{0}&-\M{I}\end{pmatrix}}_{\M{G}}\underbrace{\begin{pmatrix}\V{r}^{+}\\\V{r}^{-}\\ \V{x}\end{pmatrix}}_{\V{x}}\leq \underbrace{\textbf{0}}_{\V{h}}
+$$
+Thus, we have formulated the primal problem into an LP.
+
+
+\newpage
+
+**2.** $\ell_1$-Trend Filtering
+
+Let $\V{y} \in \Real^n$ be a noisy time series signal that we wish to smooth. Let $\M{D}^{(1)}_n$ denote the $(n-1)\times n$ first-order differencing matrix. Note that the second-order differencing matrix $\M{D}^{(2)}_{n-1}$ can be written as the product of two first-order differencing matrices: $\Mn{D}{2}_{n-1} = \Mn{D}{1}_{n-1}\Mn{D}{1}_{n}$. More generally, the $k$th order differencing matrix $\Mn{D}{k}_{n-k+1}$ can be writen as the product of a first-order differencing matrix and a $k-1$th order differencing matrix: $\Mn{D}{k}_{n-k+1} = \Mn{D}{1}_{n-k+1}\Mn{D}{k-1}_{n-k+2}$. In $\ell_1$ trend filtering, we obtain a smoothed estimate $\V{\theta}$ of $\V{y}$ by solving the following quadratic program
+$$
+\underset{\V{\theta} \in \Real^n}{\text{minimize}}\; \frac{1}{2}\lVert \V{y} - \V{\theta} \rVert_2^2 +
+\lambda \lVert \Mn{D}{k}_{n-k+1} \V{\theta} \rVert_1,
+$$
+where $\lambda \geq 0$ is a regularization parameter that trades off data fit with smoothness.
+
+**(a)** Formulate the $\ell_1$ trend filtering problem as a quadratic program.
+$\\$ $\\$
+$\textbf{Solution:}\\$
+Split $\V{\theta}$ into $\V{\theta}=\V{\theta}^{+}-\V{\theta}^{-}$, and $\Mn{D}{k}_{n-k+1}\V{\theta}=\V{\beta}^{+}-\V{\beta}^{-}$, where $\V{\theta}^{+}, \V{\theta}^{-}, \V{\beta}^{+}, \V{\beta}^{-}\geq 0$. $\\$
+Hence, the primal objective function $f$ can be written as 
+$$\begin{aligned} f_{\V{\theta}^{+}, \V{\theta}^{-}, \V{\beta}^{+}, \V{\beta}^{-}}&= \frac{1}{2}\lVert \V{y} - \V{\theta} \rVert_2^2 +
+\lambda \lVert \Mn{D}{k}_{n-k+1} \V{\theta} \rVert_1\\
+&=\frac{1}{2}\{\V{y}^{\top}\V{y}-2\V{y}^{\top}(\V{\theta}^{+}-\V{\theta}^{-})+\V{\theta}^{\top}\V{\theta}\}+\lambda\textbf{1}^{\top}(\V{\beta}^{+}-\V{\beta}^{-})\\
+&=\frac{1}{2}\V{y}^{\top}\V{y}-\V{y}^{\top}(\V{\theta}^{+}-\V{\theta}^{-})+\frac{1}{2}\V{\theta}^{\top}\V{\theta}+\lambda\textbf{1}^{\top}(\V{\beta}^{+}-\V{\beta}^{-})\\
+&=\frac{1}{2}\V{y}^{\top}\V{y}-\V{y}^{\top}(\V{\theta}^{+}-\V{\theta}^{-})+\frac{1}{2}(\V{\theta}^{+}-\V{\theta}^{-1})^{\top}(\V{\theta}^{+}-\V{\theta}^{-1})+\lambda\textbf{1}^{\top}(\V{\beta}^{+}-\V{\beta}^{-})\\
+\end{aligned}$$
+Thus, this can be formulated into a QP:
+$$min_{\V{\theta}^{+}, \V{\theta}^{-}, \V{\beta}^{+}, \V{\beta}^{-}}\underbrace{\begin{pmatrix}\V{\theta}^{+\top}& \V{\theta}^{-\top}& \V{\beta}^{+\top}& \V{\beta}^{-\top}\end{pmatrix}}_{\V{x}^{\top}}
+\underbrace{\begin{pmatrix}\frac{1}{2}\M{I}&\frac{1}{2}\M{I}&\textbf{0}&\textbf{0}\\-\frac{1}{2}\M{I}&\frac{1}{2}\M{I}&\textbf{0}&\textbf{0}\\\textbf{0}&\textbf{0}&\textbf{0}&\textbf{0}\\\textbf{0}&\textbf{0}&\textbf{0}&\textbf{0}\end{pmatrix}}_{\M{P}}\underbrace{\begin{pmatrix}\V{\theta}^{+}\\ \V{\theta}^{-}\\ \V{\beta}^{+}\\ \V{\beta}^{-}\end{pmatrix}}_{\V{x}}\\
++\underbrace{\begin{pmatrix}-\V{y}^{\top}&\V{y}^{\top}&\lambda\textbf{1}_{n-k}^{\top}&-\lambda\textbf{1}_{n-k}^{\top}\end{pmatrix}}_{\V{q}^{\top}}\underbrace{\begin{pmatrix}\V{\theta}^{+}\\ \V{\theta}^{-}\\ \V{\beta}^{+}\\ \V{\beta}^{-}\end{pmatrix}}_{\V{x}}+\underbrace{\frac{1}{2}\V{y}^{\top}\V{y}}_{\V{r}}$$
+Note, the last term $\V{y}^{\top}\V{y}$ can be ignored since it is a constant term and two norm is greater or equal than zero acoording to norm property. Hence, we don't need the constant term when using Gurobi. $\\$
+subject to: 
+$$\underbrace{-\begin{pmatrix}\M{I}_n&\textbf{0}&\textbf{0}&\textbf{0}\\\textbf{0}&\M{I}_n&\textbf{0}&\textbf{0}\\\textbf{0}&\textbf{0}&\M{I}_{n-k}&\textbf{0}\\\textbf{0}&\textbf{0}&\textbf{0}&\M{I}_{n-k}\end{pmatrix}}_{\M{G}}\underbrace{\begin{pmatrix}\V{\theta}^{+}\\ \V{\theta}^{-}\\ \V{\beta}^{+}\\ \V{\beta}^{-}\end{pmatrix}}_{\V{x}}\leq \underbrace{\textbf{0}}_{\V{h}}
+$$
+$$\underbrace{\begin{pmatrix}\Mn{D}{k}_{n-k+1}&-\Mn{D}{k}_{n-k+1}&-\M{I}_{n-k}&\M{I}_{n-k}\end{pmatrix}}_{\M{A}}\underbrace{\begin{pmatrix}\V{\theta}^{+}\\ \V{\theta}^{-}\\ \V{\beta}^{+}\\ \V{\beta}^{-}\end{pmatrix}}_{\V{x}}\leq \underbrace{\textbf{0}}_{\V{b}}
+$$
+Thus, we have formulated the primal problem into a QP.
+
+
+\newpage
+
+**Part 2.** Use R Gurobi to solve the convex programs you formulated in Part 1.
+
+**1.** Inpainting:
+
+Write a function "myGetTV2d" that computes the matrix $\Mhat{D}$ from question 1 in Part 1.
+
+```{r, echo=TRUE}
+#' Compute the inpainting differencing matrix
+#'
+#' @param m number of rows
+#' @param n number of columns
+#' @export
+#myGetTV2d <- function(n) {
+
+#}
+```
+Your function should return a **sparse** matrix (Please use the Matrix package). It is most convenient to use matrix Kronecker products to do this.
+
+**Step 2:** Write a function "myInpaint" to compute a reconstructed image (matrix) $X$, from the available data matrix $Y$, by solving the standard form LP obtained in question 1 in Part 1 using gurobi. The input matrix $Y$ should be the same size as the "smooth" matrix $X$ that you are aiming to recover. The missing entries of $Y$ should be expected to be non-numeric, e.g. NA or NaN, so the function is.numeric should be useful.
+
+```{r, echo=TRUE}
+#' Compute the inpainting completion
+#'
+#' @param Y data matrix
+#' @export
+#myInpaint <- function(Y) {
+
+#}
+```
+
+Your function should return a regular R matrix that is the restored image. Make sure that you use sparse matrices to construct the LP coefficient matrix. Your code will be painfully slow if you do not use sparse matrices.
+
+**Step 3:** Use your inpainting function to "restore" Ed Ruscha's painting. Include a before and after image.
+```{r, echo=TRUE}
+library(ysu25ST790)
+ERdata <- read.csv("/Users/su/Downloads/ST790/HW4/Ruscha.csv", header=F, sep=",")
+ERdatam<-as.matrix(ERdata)
+image(ERdatam)   #before image
+title(main="before opt. image")
+ERdatan<-myInpaint(ERdatam)
+image(ERdatan)   #after image
+title(main="after opt. image")
+```
+
+
+
+**Step 4:** Use your inpainting function to "restore" the photo of Gertrude Cox. Include a before and after image.
+```{r, echo=TRUE}
+ERdata1 <- read.csv("/Users/su/Downloads/ST790/HW4/gertrude_cox.csv", header=F, sep=",")
+ERdatam1<-as.matrix(ERdata1)
+image(ERdatam1)   #before image
+title(main="before opt. image")
+ERdatan1<-myInpaint(ERdatam1)
+image(ERdatan1)   #after image
+title(main="after opt. image")
+```
+\newpage
+
+**2.** $\ell_1$-Trend Filtering:
+
+**Step 1:** Write a function "myGetDkn" to compute the $k$th order differencing matrix $D^{(k)}_n$
+
+```{r, echo=TRUE}
+#' Compute the kth order differencing matrix
+#'
+#' @param k order of differencing operator
+#' @param n length of signal
+#' @export
+#myGetDkn <- function(k, n) {
+
+#}
+```
+where the output matrix should be a **sparse** matrix.
+
+**Step 2:** Write a function "myTrendFilter" to compute a smoothed estimate $\theta$ of noisy time series data $y$ by solving the QP obtained in question 2 in Part 1.
+
+```{r, echo=TRUE}
+#' Compute the kth order trend filtering estimator
+#'
+#' @param y noisy signal
+#' @param k order of differencing operator
+#' @param lambda regularization parameter
+#' @export
+#myTrendFilter <- function(y, k, lambda) {
+
+#}
+```
+
+**Step 3:** Use your trend filtering function to smooth some interesting time series data. For example, you might use the tseries R package on CRAN (see the function **get.hist.quote**) to download historical financial data for the daily closing prices of Apple stock over the past two years. Try several $\lambda$ values - different enough to generate noticably different smoothed estimates - and at least two differencing matrix orders, e.g. $\Mn{D}{2}_n$ and $\Mn{D}{3}_n$. Provide plots of the noisy and smoothed estimates generated by your code.
+```{r, echo=TRUE}
+library(tseries)
+#plot the time series plot
+con <- url("https://finance.yahoo.com")
+
+if(!inherits(try(open(con), silent = TRUE), "try-error")) {
+  close(con)
+  apple <- get.hist.quote(instrument = "AAPL", start = "2017-01-01",
+                      quote = "Close")
+  plot(apple)
+}
+# try different k and lambda
+#(1) k=1, lambda=0.5
+y<-apple
+k<-1
+lambda<-0.5
+y<-as.vector(y)
+n<-length(y)
+objval<-myTrendFilter(y,k,lambda)
+noisy_data=as.vector(y)
+smooth_data=objval
+test_data <-
+  data.frame(
+    noisy_data,
+    smooth_data,
+    xlab = seq(1,length(y))
+  )
+library(ggplot2)
+ggplot(test_data, aes(xlab)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("when k=1, lambda=0.5")+xlab("xlab") + ylab("Value")
+
+
+#(1) k=1, lambda=5
+k<-1
+lambda<-5
+n<-length(y)
+objval<-myTrendFilter(y,k,lambda)
+
+noisy_data=as.vector(y)
+smooth_data=objval
+test_data <-
+  data.frame(
+    noisy_data,
+    smooth_data,
+    xlab = seq(1,length(y))
+  )
+library(ggplot2)
+ggplot(test_data, aes(xlab)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("when k=1, lambda=5")+xlab("xlab") + ylab("Value")
+
+
+#(2) k=1, lambda=20
+k<-1
+lambda<-20
+n<-length(y)
+objval<-myTrendFilter(y,k,lambda)
+
+noisy_data=as.vector(y)
+smooth_data=objval
+test_data <-
+  data.frame(
+    noisy_data,
+    smooth_data,
+    xlab = seq(1,length(y))
+  )
+
+ggplot(test_data, aes(xlab)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("when k=1, lambda=20")+xlab("xlab") + ylab("Value")
+
+#(3)1 k=2, lambda=0.5
+k<-2
+lambda<-0.5
+n<-length(y)
+objval<-myTrendFilter(y,k,lambda)
+
+noisy_data=as.vector(y)
+smooth_data=objval
+test_data <-
+  data.frame(
+    noisy_data,
+    smooth_data,
+    xlab = seq(1,length(y))
+  )
+
+ggplot(test_data, aes(xlab)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("when k=2, lambda=0.5")+xlab("xlab") + ylab("Value")
+
+
+
+
+#(3) k=2, lambda=5
+k<-2
+lambda<-5
+n<-length(y)
+objval<-myTrendFilter(y,k,lambda)
+
+noisy_data=as.vector(y)
+smooth_data=objval
+test_data <-
+  data.frame(
+    noisy_data,
+    smooth_data,
+    xlab = seq(1,length(y))
+  )
+
+ggplot(test_data, aes(xlab)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("when k=2, lambda=5")+xlab("xlab") + ylab("Value")
+
+
+
+#(4) k=2, lambda=20
+
+k<-2
+lambda<-20
+n<-length(y)
+objval<-myTrendFilter(y,k,lambda)
+
+noisy_data=as.vector(y)
+smooth_data=objval
+test_data <-
+  data.frame(
+    noisy_data,
+    smooth_data,
+    xlab = seq(1,length(y))
+  )
+
+ggplot(test_data, aes(xlab)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("when k=2, lambda=20")+xlab("xlab") + ylab("Value")
+
+
+#(5)1 k=3, lambda=0.5
+k<-3
+lambda<-0.5
+n<-length(y)
+objval<-myTrendFilter(y,k,lambda)
+
+noisy_data=as.vector(y)
+smooth_data=objval
+test_data <-
+  data.frame(
+    noisy_data,
+    smooth_data,
+    xlab = seq(1,length(y))
+  )
+
+ggplot(test_data, aes(xlab)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("when k=3, lambda=0.5")+xlab("xlab") + ylab("Value")
+
+
+
+
+#(5) k=3, lambda=5
+k<-3
+lambda<-5
+n<-length(y)
+objval<-myTrendFilter(y,k,lambda)
+
+noisy_data=as.vector(y)
+smooth_data=objval
+test_data <-
+  data.frame(
+    noisy_data,
+    smooth_data,
+    xlab = seq(1,length(y))
+  )
+
+ggplot(test_data, aes(xlab)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("when k=3, lambda=5")+xlab("xlab") + ylab("Value")
+
+
+
+#(6) k=3, lambda=20
+
+k<-3
+lambda<-0.5
+n<-length(y)
+objval<-myTrendFilter(y,k,lambda)
+
+noisy_data=as.vector(y)
+smooth_data=objval
+test_data <-
+  data.frame(
+    noisy_data,
+    smooth_data,
+    xlab = seq(1,length(y))
+  )
+
+ggplot(test_data, aes(xlab)) + 
+  geom_point(aes(y = noisy_data, colour = "noisy_data")) + 
+  geom_line(aes(y = smooth_data, colour = "smooth_data"))+
+  ggtitle("when k=3, lambda=20")+xlab("xlab") + ylab("Value")
+
+```
