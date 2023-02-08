@@ -239,15 +239,6 @@ dof<-cov/sig2
 
 
 ## 
-
-
-
-
-
-
-
-
-
 set.seed(1)
 X<-matrix(rnorm(500*1000), nrow=500, ncol=1000)
 B<-c(rep(1,10),rep(0,990))
