@@ -1,2 +1,2 @@
-# Course_Statistical-Computation
-HWs and Project code (ST790 - course took in 2019)
+# Coursework_Statistical-Computation
+RMD file and Project code (Course took in 2019)
